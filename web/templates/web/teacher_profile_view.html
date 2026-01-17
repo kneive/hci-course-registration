@@ -1,0 +1,30 @@
+{% extends 'web/base.html' %}
+
+{% block title %}{{ teacher_profile.name }}{% endblock %}
+
+{% block content %}
+<h1>{{ teacher_profile.name }}</h1>
+
+<div class="card">
+    <p><strong>Email:</strong> <a href="mailto:{{ teacher_profile.email }}">{{ teacher_profile.email }}</a></p>
+    <p><strong>Room:</strong> {{ teacher_profile.room }}</p>
+    <p><strong>Office Hours (Sprechstunde):</strong></p>
+    <p>{{ teacher_profile.office_hours|linebreaks }}</p>
+</div>
+
+<h2>Courses</h2>
+{% if courses %}
+    {% for course in courses %}
+    <div class="card">
+        <h3><a href="{% url 'course_detail' course.id %}">{{ course.title }}</a></h3>
+        <p><strong>Schedule:</strong> {{ course.schedule_time }}</p>
+        <p><strong>Room:</strong> {{ course.room }}</p>
+        <p>{{ course.short_description }}</p>
+    </div>
+    {% endfor %}
+{% else %}
+    <p>This teacher has no courses.</p>
+{% endif %}
+
+<a href="{% url 'teacher_search' %}" class="btn btn-secondary">Back to Teacher List</a>
+{% endblock %}

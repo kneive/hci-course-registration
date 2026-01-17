@@ -1,0 +1,20 @@
+{% extends 'web/base.html' %}
+
+{% block title %}Delete Exam{% endblock %}
+
+{% block content %}
+<h1>Delete Exam</h1>
+
+<div class="card">
+    <p>Are you sure you want to delete the exam <strong>{{ exam.title }}</strong>?</p>
+    <p><strong>Course:</strong> {{ exam.course.title }}</p>
+    <p><strong>Date:</strong> {{ exam.date|date:"Y-m-d H:i" }}</p>
+    <p>This action cannot be undone.</p>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Yes, Delete Exam</button>
+    <a href="{% url 'teacher_dashboard' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

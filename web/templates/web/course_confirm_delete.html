@@ -1,0 +1,19 @@
+{% extends 'web/base.html' %}
+
+{% block title %}Delete Course{% endblock %}
+
+{% block content %}
+<h1>Delete Course</h1>
+
+<div class="card">
+    <p>Are you sure you want to delete the course <strong>{{ course.title }}</strong>?</p>
+    <p>This action cannot be undone. All associated exams will also be deleted.</p>
+    <p><strong>Enrolled Students:</strong> {{ course.students.count }}</p>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Yes, Delete Course</button>
+    <a href="{% url 'teacher_dashboard' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

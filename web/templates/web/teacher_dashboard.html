@@ -1,0 +1,69 @@
+{% extends 'web/base.html' %}
+
+{% block title %}Teacher Dashboard{% endblock %}
+
+{% block content %}
+<h1>Teacher Dashboard</h1>
+<p>Welcome, {{ user.username }}!</p>
+
+{% if not profile %}
+    <div class="card">
+        <h3>Create Your Profile</h3>
+        <p>You need to create a teacher profile before you can create courses.</p>
+        <a href="{% url 'teacher_profile_create' %}" class="btn">Create Profile</a>
+    </div>
+{% else %}
+    <div class="card">
+        <h3>Your Profile</h3>
+        <p><strong>Name:</strong> {{ profile.name }}</p>
+        <p><strong>Email:</strong> {{ profile.email }}</p>
+        <p><strong>Room:</strong> {{ profile.room }}</p>
+        <p><strong>Office Hours:</strong> {{ profile.office_hours|linebreaks }}</p>
+        <a href="{% url 'teacher_profile_edit' %}" class="btn">Edit Profile</a>
+    </div>
+
+    <h2>My Courses</h2>
+    <a href="{% url 'course_create' %}" class="btn">Create New Course</a>
+    
+    {% if courses %}
+        {% for course in courses %}
+        <div class="card">
+            <h3>{{ course.title }}</h3>
+            <p><strong>Schedule:</strong> {{ course.schedule_time }}</p>
+            <p><strong>Room:</strong> {{ course.room }}</p>
+            <p><strong>Total Hours:</strong> {{ course.total_hours }}</p>
+            <p><strong>Enrolled Students:</strong> {{ course.students.count }}</p>
+            <p>{{ course.short_description }}</p>
+            
+            <h4>Exams</h4>
+            {% if course.exams.all %}
+                <ul>
+                    {% for exam in course.exams.all %}
+                    <li>
+                        {{ exam.title }} - {{ exam.date|date:"Y-m-d H:i" }} at {{ exam.location }}
+                        <form method="post" action="{% url 'exam_delete' exam.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this exam?')">Delete</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No exams scheduled</p>
+            {% endif %}
+            <a href="{% url 'exam_create' course.id %}" class="btn btn-secondary">Add Exam</a>
+            
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'course_edit' course.id %}" class="btn">Edit Course</a>
+                <form method="post" action="{% url 'course_delete' course.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this course?')">Delete Course</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>You haven't created any courses yet.</p>
+    {% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'web/base.html' %}
+
+{% block title %}Browse Courses{% endblock %}
+
+{% block content %}
+<h1>Browse Courses</h1>
+
+<form method="get" style="margin-bottom: 2rem;">
+    <input type="text" name="search" placeholder="Search courses..." value="{{ search_query }}" style="width: 300px;">
+    <button type="submit" class="btn">Search</button>
+</form>
+
+{% if courses %}
+    {% for course in courses %}
+    <div class="card">
+        <h3><a href="{% url 'course_detail' course.id %}">{{ course.title }}</a></h3>
+        <p><strong>Teacher:</strong> <a href="{% url 'teacher_profile_view' course.teacher.id %}">{{ course.teacher.name }}</a></p>
+        <p><strong>Schedule:</strong> {{ course.schedule_time }}</p>
+        <p><strong>Room:</strong> {{ course.room }}</p>
+        <p><strong>Total Hours:</strong> {{ course.total_hours }}</p>
+        <p>{{ course.short_description }}</p>
+        <a href="{% url 'course_detail' course.id %}" class="btn">View Details</a>
+    </div>
+    {% endfor %}
+{% else %}
+    <p>No courses found.</p>
+{% endif %}
+{% endblock %}

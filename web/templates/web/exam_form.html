@@ -1,0 +1,14 @@
+{% extends 'web/base.html' %}
+
+{% block title %}{{ action }} Exam{% endblock %}
+
+{% block content %}
+<h1>{{ action }} Exam for {{ course.title }}</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn">{{ action }} Exam</button>
+    <a href="{% url 'teacher_dashboard' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

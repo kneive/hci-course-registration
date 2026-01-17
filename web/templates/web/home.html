@@ -1,0 +1,19 @@
+{% extends 'web/base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<h1>Course Registration System</h1>
+
+{% if user.is_authenticated %}
+    <p>Welcome back, {{ user.username }}!</p>
+    {% if user.role == 'student' %}
+        <a href="{% url 'student_dashboard' %}" class="btn">Go to Dashboard</a>
+    {% elif user.role == 'teacher' %}
+        <a href="{% url 'teacher_dashboard' %}" class="btn">Go to Dashboard</a>
+    {% endif %}
+{% else %}
+    <p>Please log in to access the course registration system.</p>
+    <a href="{% url 'login' %}" class="btn">Login</a>
+{% endif %}
+{% endblock %}

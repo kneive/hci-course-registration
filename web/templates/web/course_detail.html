@@ -1,0 +1,51 @@
+{% extends 'web/base.html' %}
+
+{% block title %}{{ course.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ course.title }}</h1>
+
+<div class="card">
+    <p><strong>Teacher:</strong> <a href="{% url 'teacher_profile_view' course.teacher.id %}">{{ course.teacher.name }}</a></p>
+    <p><strong>Schedule:</strong> {{ course.schedule_time }}</p>
+    <p><strong>Room:</strong> {{ course.room }}</p>
+    <p><strong>Total Hours:</strong> {{ course.total_hours }}</p>
+    <p><strong>Enrolled Students:</strong> {{ course.students.count }}</p>
+    
+    <h3>Description</h3>
+    <p>{{ course.long_description|linebreaks }}</p>
+    
+    {% if course.exams.all %}
+    <h3>Exams</h3>
+    <ul>
+        {% for exam in course.exams.all %}
+        <li>
+            <strong>{{ exam.title }}</strong><br>
+            Date: {{ exam.date|date:"Y-m-d H:i" }}<br>
+            Location: {{ exam.location }}<br>
+            Duration: {{ exam.duration_minutes }} minutes
+            {% if exam.description %}
+            <br>{{ exam.description }}
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    
+    {% if user.role == 'student' %}
+        {% if is_enrolled %}
+            <form method="post" action="{% url 'unenroll_course' course.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to quit this course?')">Quit Course</button>
+            </form>
+        {% else %}
+            <form method="post" action="{% url 'enroll_course' course.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn">Enroll in Course</button>
+            </form>
+        {% endif %}
+    {% endif %}
+</div>
+
+<a href="{% url 'course_list' %}" class="btn btn-secondary">Back to Course List</a>
+{% endblock %}
