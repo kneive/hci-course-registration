@@ -29,6 +29,35 @@ def login_view(request):
     
     return render(request, 'web/login.html')
 
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        role = request.POST.get('role')
+        
+        if role == 'student':
+            form = StudentRegistrationForm(request.POST)
+        elif role == 'teacher':
+            form = TeacherRegistrationForm(request.POST)
+        else:
+            messages.error(request, 'Please select a valid role.')
+            return render(request, 'web/register.html')
+        
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Registration successful! Welcome!')
+            
+            if role == 'student':
+                return redirect('student_dashboard')
+            else:
+                return redirect('teacher_profile_create')
+        else:
+            return render(request, 'web/register.html', {'form': form, 'role': role})
+    
+    return render(request, 'web/register.html')
+
 @login_required
 def logout_view(request):
     logout(request)
@@ -114,8 +143,105 @@ def student_timetable(request):
         return redirect('teacher_dashboard')
     
     enrolled_courses = request.user.enrolled_courses.all()
+    
+    # Parse schedule_time and organize courses by day and time
+    schedule = {
+        'monday': [],
+        'tuesday': [],
+        'wednesday': [],
+        'thursday': [],
+        'friday': [],
+        'saturday': [],
+        'sunday': []
+    }
+    
+    # Time slots (2-hour blocks from 6:00 to 22:00)
+    time_slots = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00']
+    
+    # Day name mappings
+    day_mappings = {
+        'mon': 'monday', 'monday': 'monday', 'm': 'monday',
+        'tue': 'tuesday', 'tuesday': 'tuesday', 'tu': 'tuesday',
+        'wed': 'wednesday', 'wednesday': 'wednesday', 'w': 'wednesday',
+        'thu': 'thursday', 'thursday': 'thursday', 'th': 'thursday',
+        'fri': 'friday', 'friday': 'friday', 'f': 'friday',
+        'sat': 'saturday', 'saturday': 'saturday', 'sa': 'saturday',
+        'sun': 'sunday', 'sunday': 'sunday', 'su': 'sunday'
+    }
+    
+    # Multi-day abbreviations
+    multi_day_mappings = {
+        'mwf': ['monday', 'wednesday', 'friday'],
+        'mw': ['monday', 'wednesday'],
+        'tr': ['tuesday', 'thursday'],
+        'tth': ['tuesday', 'thursday'],
+        'mf': ['monday', 'friday']
+    }
+    
+    import re
+    
+    for course in enrolled_courses:
+        schedule_time = course.schedule_time.strip()
+        
+        # Try to parse the schedule_time
+        match = re.match(r'([A-Za-z/]+)\s+(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})', schedule_time, re.IGNORECASE)
+        
+        if match:
+            day_part = match.group(1).lower()
+            start_hour = int(match.group(2))
+            start_min = match.group(3)
+            end_hour = int(match.group(4))
+            end_min = match.group(5)
+            
+            # Determine which days this course is on
+            days = []
+            
+            # Check for multi-day abbreviations
+            day_part_clean = day_part.replace('/', '').replace(',', '').replace(' ', '')
+            if day_part_clean in multi_day_mappings:
+                days = multi_day_mappings[day_part_clean]
+            else:
+                # Check for slash or comma separated days
+                if '/' in day_part or ',' in day_part:
+                    day_parts = re.split(r'[/,\s]+', day_part)
+                    for dp in day_parts:
+                        dp = dp.strip()
+                        if dp in day_mappings:
+                            days.append(day_mappings[dp])
+                else:
+                    # Single day
+                    if day_part in day_mappings:
+                        days.append(day_mappings[day_part])
+            
+            # Find which time slot this course belongs to
+            start_time_str = f"{start_hour:02d}:00"
+            
+            # Add course info with time slot
+            for day in days:
+                if day in schedule:
+                    schedule[day].append({
+                        'course': course,
+                        'start_hour': start_hour,
+                        'time_slot': start_time_str
+                    })
+    
+    # Organize by time slots for each day
+    schedule_by_slots = {}
+    for day in schedule.keys():
+        schedule_by_slots[day] = {}
+        for slot in time_slots:
+            schedule_by_slots[day][slot] = []
+            slot_hour = int(slot.split(':')[0])
+            
+            # Find courses that fit in this slot
+            for course_info in schedule[day]:
+                if slot_hour <= course_info['start_hour'] < slot_hour + 2:
+                    schedule_by_slots[day][slot].append(course_info['course'])
+    
     return render(request, 'web/student_timetable.html', {
-        'enrolled_courses': enrolled_courses
+        'enrolled_courses': enrolled_courses,
+        'schedule': schedule_by_slots,
+        'time_slots': time_slots
     })
 
 @login_required
@@ -145,6 +271,21 @@ def teacher_profile_view(request, profile_id):
     return render(request, 'web/teacher_profile_view.html', {
         'teacher_profile': teacher_profile,
         'courses': courses
+    })
+
+@login_required
+def student_exams(request):
+    if request.user.role != 'student':
+        return redirect('teacher_dashboard')
+    
+    # Get all courses the student is enrolled in
+    enrolled_courses = request.user.enrolled_courses.all()
+    
+    # Get all exams for those courses
+    exams = Exam.objects.filter(course__in=enrolled_courses).order_by('date')
+    
+    return render(request, 'web/student_exams.html', {
+        'exams': exams
     })
 
 # Teacher views
@@ -194,6 +335,24 @@ def teacher_profile_create(request):
     return render(request, 'web/teacher_profile_form.html', {
         'form': form,
         'action': 'Create'
+    })
+
+@login_required
+def teacher_exams(request):
+    if request.user.role != 'teacher':
+        return redirect('student_dashboard')
+    
+    try:
+        profile = request.user.teacher_profile
+        # Get all exams from all courses taught by this teacher
+        exams = Exam.objects.filter(course__teacher=profile).order_by('date')
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, 'Bitte erstelle zuerst ein Profil.')
+        return redirect('teacher_profile_create')
+    
+    return render(request, 'web/teacher_exams.html', {
+        'exams': exams,
+        'profile': profile
     })
 
 @login_required
@@ -299,6 +458,23 @@ def course_delete(request, course_id):
     return render(request, 'web/course_confirm_delete.html', {'course':course})
 
 @login_required
+def teacher_courses(request):
+    if request.user.role != 'teacher':
+        return redirect('student_dashboard')
+    
+    try:
+        profile = request.user.teacher_profile
+        courses = profile.courses.all().order_by('-created_at')
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, 'Bitte erstelle zuerst ein Profil.')
+        return redirect('teacher_profile_create')
+    
+    return render(request, 'web/teacher_courses.html', {
+        'courses': courses,
+        'profile': profile
+    })
+
+@login_required
 def exam_create(request, course_id):
     if request.user.role != 'teacher':
         messages.error(request, 'Nur Dozierende können Prüfungen erstellen.')
@@ -347,4 +523,3 @@ def exam_delete(request, exam_id):
         return redirect('teacher_dashboard')
     
     return render(request,'web/exam_confirm_delete.html', {'exam':exam})
-

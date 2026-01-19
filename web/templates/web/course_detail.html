@@ -1,51 +1,476 @@
-{% extends 'web/base.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.title }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}{{ course.title }}{% endblock %}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background-image: url('{% static "images/landing.jpg" %}');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            padding: 2rem 0;
+        }
 
-{% block content %}
-<h1>{{ course.title }}</h1>
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 0;
+        }
 
-<div class="card">
-    <p><strong>Teacher:</strong> <a href="{% url 'teacher_profile_view' course.teacher.id %}">{{ course.teacher.name }}</a></p>
-    <p><strong>Schedule:</strong> {{ course.schedule_time }}</p>
-    <p><strong>Room:</strong> {{ course.room }}</p>
-    <p><strong>Total Hours:</strong> {{ course.total_hours }}</p>
-    <p><strong>Enrolled Students:</strong> {{ course.students.count }}</p>
-    
-    <h3>Description</h3>
-    <p>{{ course.long_description|linebreaks }}</p>
-    
-    {% if course.exams.all %}
-    <h3>Exams</h3>
-    <ul>
-        {% for exam in course.exams.all %}
-        <li>
-            <strong>{{ exam.title }}</strong><br>
-            Date: {{ exam.date|date:"Y-m-d H:i" }}<br>
-            Location: {{ exam.location }}<br>
-            Duration: {{ exam.duration_minutes }} minutes
-            {% if exam.description %}
-            <br>{{ exam.description }}
-            {% endif %}
-        </li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    
-    {% if user.role == 'student' %}
-        {% if is_enrolled %}
-            <form method="post" action="{% url 'unenroll_course' course.id %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to quit this course?')">Quit Course</button>
-            </form>
-        {% else %}
-            <form method="post" action="{% url 'enroll_course' course.id %}">
-                {% csrf_token %}
-                <button type="submit" class="btn">Enroll in Course</button>
-            </form>
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 50%;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem 2rem;
+            background: rgba(255, 255, 255, 0.85);
+            color: black;
+            text-decoration: none;
+            border-radius: 50px;
+            border: 1px solid rgb(90,130,190);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(133, 133, 133, 0.6);
+            backdrop-filter: blur(10px);
+        }
+
+        .back-link:hover {
+            background: white;
+            border: 1px solid rgb(50,45,175);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(133, 133, 133, 0.5);
+        }
+
+        .course-container {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(133, 133, 133, 0.3);
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .course-header {
+            background: rgb(255,255,255, 0.15);
+            color: black;
+            padding: 3rem 2.5rem;
+            position: relative;
+        }
+
+        .course-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            line-height: 1.2;
+        }
+
+        .enrollment-status {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .enrollment-status.enrolled {
+            background: rgba(67, 233, 123, 0.3);
+            border-color: rgba(67, 233, 123, 0.5);
+        }
+
+        .course-body {
+            padding: 2.5rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 1.25rem;
+            border-radius: 12px;
+            border-left: 2px solid rgb(50,45,175);
+            border: 1px solid rgb(90,130,190);
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            color: rgb(50,45,175);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .info-value a {
+            color: #667eea;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .info-value a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .section {
+            margin-bottom: 2.5rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #667eea;
+            display: inline-block;
+        }
+
+        .description {
+            color: #555;
+            line-height: 1.8;
+            font-size: 1.05rem;
+            background: rgb(255,255,255,0.85);
+            border: 1px solid rgb(90,130,190);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 2px solid rgb(50,45,175);
+        }
+
+        .exams-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .exam-card {
+            background: rgb(255,255,255,0.85);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 2px solid rgb(50,45,175);
+            border: 1px solid rgb(90,130,190);
+            transition: all 0.3s ease;
+        }
+
+        .exam-card:hover {
+            transform: translateX(5px);
+            border: 1px solid rgb(50,45,175);
+            box-shadow: 0 4px 15px rgba(133, 133, 133, 0.6);
+        }
+
+        .exam-title {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .exam-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .exam-detail {
+            font-size: 0.95rem;
+            color:black;
+        }
+
+        .exam-detail strong {
+            color: rgb(50,45,175);
+            font-weight: 600;
+        }
+
+        .exam-description {
+            color: #666;
+            font-size: 0.95rem;
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        .no-exams {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #e9ecef;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-enroll {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-enroll:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(67, 233, 123, 0.4);
+        }
+
+        .btn-quit {
+            background: rgb(255,255,255);
+            border: 1px solid rgb(90,130,190);
+            color: black;
+            flex: 1;
+            box-shadow: 0 4px 15px rgba(133,133,133,0.5);
+        }
+
+        .btn-quit:hover {
+            transform: translateY(-3px);
+            border: 1px solid rgb(50,45,175);
+            box-shadow: 0 6px 25px rgba(133, 133, 133, 0.6);
+        }
+
+        .messages {
+            margin-bottom: 1.5rem;
+        }
+
+        .message {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .message.error {
+            background: #fee;
+            color: #c33;
+            border-left: 4px solid #c33;
+        }
+
+        .message.success {
+            background: #efe;
+            color: #3c3;
+            border-left: 4px solid #3c3;
+        }
+
+        .message.warning {
+            background: #ffe;
+            color: #cc8800;
+            border-left: 4px solid #cc8800;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .course-header {
+                padding: 2rem 1.5rem;
+            }
+
+            .course-header h1 {
+                font-size: 1.8rem;
+            }
+
+            .course-body {
+                padding: 1.5rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'course_list' %}" class="back-link">← Zum Vorlesungsverzeichnis</a>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
         {% endif %}
-    {% endif %}
-</div>
 
-<a href="{% url 'course_list' %}" class="btn btn-secondary">Back to Course List</a>
-{% endblock %}
+        <div class="course-container">
+            <div class="course-header">
+                <h1>{{ course.title }}</h1>
+                {% if user.role == 'student' %}
+                    {% if is_enrolled %}
+                        <span class="enrollment-status enrolled">✓ Angemeldet</span>
+                    {% else %}
+                        <span class="enrollment-status">Nicht angemeldet</span>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <div class="course-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Dozent*in</div>
+                        <div class="info-value">
+                            <a href="{% url 'teacher_profile_view' course.teacher.id %}">{{ course.teacher.name }}</a>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Termin</div>
+                        <div class="info-value">{{ course.schedule_time }}</div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Raum</div>
+                        <div class="info-value">{{ course.room }}</div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Gesamtaufwand</div>
+                        <div class="info-value">{{ course.total_hours }} hours</div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Angemeldet</div>
+                        <div class="info-value">{{ course.students.count }}</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">Kursbeschreibung</h2>
+                    <div class="description">
+                        {{ course.long_description|linebreaks }}
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">Prüfung</h2>
+                    {% if course.exams.all %}
+                        <div class="exams-list">
+                            {% for exam in course.exams.all %}
+                            <div class="exam-card">
+                                <div class="exam-title">{{ exam.title }}</div>
+                                <div class="exam-details">
+                                    <div class="exam-detail">
+                                        <strong>Datum:</strong> {{ exam.date|date:"d.m.Y H:i" }}
+                                    </div>
+                                    <div class="exam-detail">
+                                        <strong>Ort:</strong> {{ exam.location }}
+                                    </div>
+                                    <div class="exam-detail">
+                                        <strong>Dauer:</strong> {{ exam.duration_minutes }} Minuten
+                                    </div>
+                                </div>
+                                {% if exam.description %}
+                                    <div class="exam-description">{{ exam.description }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="no-exams">No exams scheduled for this course yet.</div>
+                    {% endif %}
+                </div>
+
+                {% if user.role == 'student' %}
+                    <div class="action-buttons">
+                        {% if is_enrolled %}
+                            <form method="post" action="{% url 'unenroll_course' course.id %}" style="flex: 1;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-quit" onclick="return confirm('Are you sure you want to quit this course?')">
+                                    Abmelden
+                                </button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{% url 'enroll_course' course.id %}" style="flex: 1;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-enroll">
+                                    ✓ Anmelden
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,444 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meine Prüfungen</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            background-image: url('{% static "images/landing.jpg" %}');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: rgba(255, 255, 255, 0.75);
+            color: black;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .back-link:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .logout-link {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: rgba(255, 255, 255, 0.75);
+            color: black;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .logout-link:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-box {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-box h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-box p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .results-box {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .results-header {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .results-header h2 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .results-count {
+            color: #666;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        .exams-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .exams-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .exams-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+
+        .exams-list::-webkit-scrollbar-thumb {
+            background: rgba(240, 147, 251, 0.5);
+            border-radius: 10px;
+        }
+
+        .exams-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(240, 147, 251, 0.7);
+        }
+
+        .exam-item {
+            background: rgb(255,255,255,0.55);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(133, 133, 133, 0.3);
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            border: 1px solid rgb(90,130,190);
+            border-left: 2px solid rgb(50,45,175);
+            backdrop-filter: blur(5px);
+        }
+
+        .exam-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 6px 20px rgba(133, 133, 133, 0.4);
+            border-color: 1px solid rgb(50,45,175);
+        }
+
+        .exam-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .exam-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .exam-title {
+            color: #333;
+            font-size: 1.3rem;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .exam-date-badge {
+            padding: 0.5rem 1rem;
+            background: rgb(255,255,255);
+            color: black;
+            border-radius: 20px;
+            border: 1px solid rgb(90,130,190);
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .exam-course {
+            color: rgb(50,45,175);
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .exam-course:hover {
+            text-decoration: underline;
+        }
+
+        .exam-meta {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.5rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: rgb(50,45,175);
+        }
+
+        .meta-value {
+            color: #555;
+        }
+
+        .exam-description {
+            color: #666;
+            line-height: 1.5;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e0e0e0;
+            font-style: italic;
+        }
+
+        .exam-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            padding: 0.5rem 1.25rem;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-delete {
+            background: rgb(255,255,255);
+            color: black;
+            border: 1px solid rgb(90,130,190);
+            box-shadow: 0 4px 15px rgb(133,133,133,0.3);
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            border: 1px solid rgb(50,45,175);
+            box-shadow: 0 4px 15px rgba(133, 133, 133, 0.4);
+        }
+
+        .no-exams {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #666;
+        }
+
+        .no-exams h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .no-exams p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-link {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .top-nav {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: stretch;
+            }
+
+            .back-link,
+            .logout-link {
+                text-align: center;
+            }
+
+            .header-box h1 {
+                font-size: 2rem;
+            }
+
+            .exam-item {
+                padding: 1rem;
+            }
+
+            .exam-header {
+                flex-direction: column;
+            }
+
+            .exam-title {
+                font-size: 1.1rem;
+            }
+
+            .exam-actions {
+                justify-content: stretch;
+            }
+
+            .btn-action {
+                flex: 1;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-nav">
+            <a href="{% url 'teacher_dashboard' %}" class="back-link">← Zurück zum Dashboard</a>
+            <a href="{% url 'logout' %}" class="logout-link">Logout</a>
+        </div>
+
+        <div class="header-box">
+            <h1>Meine Prüfungen</h1>
+            <p>Verwalte alle Prüfungen deiner Kurse</p>
+        </div>
+
+        <div class="results-box">
+            <div class="results-header">
+                <h2>Alle Prüfungen</h2>
+                {% if exams %}
+                    <div class="results-count">{{ exams|length }} Prüfung{{ exams|length|pluralize:"en" }}</div>
+                {% endif %}
+            </div>
+
+            <div class="exams-list">
+                {% if exams %}
+                    {% for exam in exams %}
+                    <div class="exam-item">
+                        <div class="exam-header">
+                            <div class="exam-title">{{ exam.title }}</div>
+                            <div class="exam-date-badge">{{ exam.date|date:"d.m.Y H:i" }}</div>
+                        </div>
+
+                        <a href="{% url 'course_detail' exam.course.id %}" class="exam-course">
+                            {{ exam.course.title }}
+                        </a>
+
+                        <div class="exam-meta">
+                            <span class="meta-label">Ort:</span>
+                            <span class="meta-value">{{ exam.location }}</span>
+
+                            <span class="meta-label">Dauer:</span>
+                            <span class="meta-value">{{ exam.duration_minutes }} Minuten</span>
+
+                            <span class="meta-label">Anmeldungen:</span>
+                            <span class="meta-value">{{ exam.course.students.count }}</span>
+                        </div>
+
+                        {% if exam.description %}
+                        <div class="exam-description">
+                            {{ exam.description }}
+                        </div>
+                        {% endif %}
+
+                        <div class="exam-actions">
+                            <form method="post" action="{% url 'exam_delete' exam.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-action btn-delete" onclick="return confirm('Möchtest du diese Prüfung wirklich löschen?')">Löschen</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-exams">
+                        <h2>Noch keine Prüfungen</h2>
+                        <p>Du hast noch keine Prüfungen erstellt.</p>
+                        <p>Erstelle Prüfungen für deine Kurse.</p>
+                        <a href="{% url 'teacher_courses' %}" class="btn-link">Zu meinen Kursen</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -15,9 +15,9 @@ class User(AbstractUser):
 
 class TeacherProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='teacher_profile')
-    name = models.CharField(max_length=200)
-    room = models.CharField(max_length=50)
-    office_hours = models.TextField(help_text="Sprechstundenzeiten")
+    name = models.CharField(verbose_name='Name', max_length=200)
+    room = models.CharField(verbose_name='Raum', max_length=50)
+    office_hours = models.TextField(verbose_name='Sprechstunde',help_text="Sprechstundenzeiten")
     email = models.EmailField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -26,21 +26,26 @@ class TeacherProfile(models.Model):
         return self.name
     
 class Course(models.Model):
-    title = models.CharField(max_length=200, 
+    title = models.CharField(verbose_name='Titel',
+                             max_length=200, 
                              help_text='Kursname')
     
-    short_description = models.CharField(max_length=500, 
+    short_description = models.CharField(verbose_name='Kurzbeschreibung',
+                                         max_length=500, 
                                          help_text='Kurzbeschreibung')
     
-    long_description = models.TextField(help_text='Ausführliche Beschreibung')
+    long_description = models.TextField(verbose_name='Beschreibung',
+                                        help_text='Ausführliche Beschreibung')
     
-    total_hours = models.PositiveIntegerField(validators=[MinValueValidator(1)], 
+    total_hours = models.PositiveIntegerField(verbose_name='Gesamtaufwand',
+                                              validators=[MinValueValidator(1)], 
                                               help_text='Gesamtaufwand')
     
     schedule_time = models.CharField(max_length=200, 
                                      help_text='Kurszeiten')
     
-    room = models.CharField(max_length=50, 
+    room = models.CharField(verbose_name='Raum',
+                            max_length=50, 
                             help_text='Raum')
     
     teacher = models.ForeignKey(TeacherProfile, 

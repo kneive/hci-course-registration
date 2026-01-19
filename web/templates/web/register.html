@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Course Registration System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('/static/images/login.webp');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            padding: 2rem 0;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 0;
+        }
+
+        .register-container {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            margin: 1rem;
+            animation: slideIn 0.5s ease-out;
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .register-header h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .register-header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .role-selection {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            min-height: 150px;
+        }
+
+        .role-option {
+            flex: 1;
+            padding: 1.5rem;
+            border: 2px solid rgb(90,130,190);
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .role-option:hover {
+            border-color: rgb(50,45,175);
+            background: rgb(255,255,255,0.85);
+        }
+
+        .role-option input[type="radio"] {
+            display: none;
+        }
+
+        .role-option input[type="radio"]:checked + label {
+            color: rgb(50,45,175);
+        }
+
+        .role-option.selected {
+            border-color: rgb(50,45,175);
+            background: linear-gradient(135deg, rgba(90,130,190, 0.1) 0%, rgba(50, 45, 175, 0.1) 100%);
+        }
+
+        .role-option .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .role-option label {
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: 2px solid rgb(90,130,190);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: rgb(50,45,175);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(133, 133, 133, 0.1);
+        }
+
+        .error-list {
+            list-style: none;
+            margin-top: 0.5rem;
+        }
+
+        .error-list li {
+            color: #c33;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 1rem;
+            background: rgb(255,255,255);
+            color: black;
+            border: 1px solid rgb(90,130,190);
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+            box-shadow: 0 4px 15px rbga(133,133,133,0.5);
+
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            border:1px solid rgb(50,45,175);
+            box-shadow: 0 10px 25px rgba(133, 133, 133, 0.6);
+        }
+
+        .register-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .register-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .register-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .messages {
+            margin-bottom: 1.5rem;
+        }
+
+        .message {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .message.error {
+            background: #fee;
+            color: #c33;
+            border-left: 4px solid #c33;
+        }
+
+        #registration-form {
+            display: none;
+        }
+
+        #registration-form.show {
+            display: block;
+        }
+
+        .back-link {
+            position: absolute;
+            left: calc(45% - 250px - 8rem);
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 0.75rem 2rem;
+            background: rgba(255, 255, 255, 0.75);
+            color: black;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            z-index: 2;
+        }
+
+        .back-link:hover {
+            background: white;
+            transform: translateY(-50%) translateX(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .back-link {
+                position: static;
+                transform: none;
+                display: block;
+                width: fit-content;
+                margin: 0 auto 2rem;
+            }
+            
+            .back-link:hover {
+                transform: translateY(-2px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="{% url 'home' %}" class="back-link">← Home</a>
+    
+    <div class="register-container">
+        <div class="register-header">
+            <h1>Benutzerkonto erstellen</h1>
+        </div>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" id="register-form">
+            {% csrf_token %}
+            
+            <div class="role-selection">
+                <div class="role-option" onclick="selectRole('student')">
+                    <input type="radio" name="role" value="student" id="role-student" required>
+                    <label for="role-student">Studierende</label>
+                </div>
+                <div class="role-option" onclick="selectRole('teacher')">
+                    <input type="radio" name="role" value="teacher" id="role-teacher" required>
+                    <label for="role-teacher">Lehrende</label>
+                </div>
+            </div>
+
+            <div id="registration-form" {% if form %}class="show"{% endif %}>
+                <div class="form-group">
+                    <label for="username">Benutzername</label>
+                    <input type="text" id="username" name="username" required 
+                           value="{{ form.username.value|default:'' }}"
+                           placeholder="Benutzernamen eingeben">
+                    {% if form.username.errors %}
+                        <ul class="error-list">
+                            {% for error in form.username.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" required
+                           value="{{ form.email.value|default:'' }}"
+                           placeholder="email@example.com">
+                    {% if form.email.errors %}
+                        <ul class="error-list">
+                            {% for error in form.email.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="password1">Passwort</label>
+                    <input type="password" id="password1" name="password1" required
+                           placeholder="Passwort eingeben">
+                    {% if form.password1.errors %}
+                        <ul class="error-list">
+                            {% for error in form.password1.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="password2">Passwort bestätigen</label>
+                    <input type="password" id="password2" name="password2" required
+                           placeholder="Passwort erneut eingeben">
+                    {% if form.password2.errors %}
+                        <ul class="error-list">
+                            {% for error in form.password2.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn-register">Benutzerkonto anlegen</button>
+            </div>
+        </form>
+
+        <div class="register-footer">
+            <p>Haben Sie bereits ein Benutzerkonto? <a href="{% url 'login' %}">Anmelden</a></p>
+        </div>
+    </div>
+
+    <script>
+        function selectRole(role) {
+            // Remove selected class from all options
+            document.querySelectorAll('.role-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked option
+            event.currentTarget.classList.add('selected');
+            
+            // Check the radio button
+            document.getElementById('role-' + role).checked = true;
+            
+            // Show the registration form
+            document.getElementById('registration-form').classList.add('show');
+        }
+
+        // Pre-select role if form was submitted with errors
+        {% if role %}
+            selectRole('{{ role }}');
+        {% endif %}
+    </script>
+</body>
+</html>

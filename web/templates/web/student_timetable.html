@@ -1,35 +1,864 @@
-{% extends 'web/base.html' %}
+{% load static %}
+{% load timetable_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Timetable</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}My Timetable{% endblock %}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background-image: url('{% static "images/landing.jpg" %}');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            padding: 2rem 0;
+        }
 
-{% block content %}
-<h1>My Timetable</h1>
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 0;
+        }
 
-{% if enrolled_courses %}
-    <table>
-        <thead>
-            <tr>
-                <th>Course</th>
-                <th>Teacher</th>
-                <th>Schedule</th>
-                <th>Room</th>
-                <th>Total Hours</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for course in enrolled_courses %}
-            <tr>
-                <td><a href="{% url 'course_detail' course.id %}">{{ course.title }}</a></td>
-                <td><a href="{% url 'teacher_profile_view' course.teacher.id %}">{{ course.teacher.name }}</a></td>
-                <td>{{ course.schedule_time }}</td>
-                <td>{{ course.room }}</td>
-                <td>{{ course.total_hours }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% else %}
-    <p>You are not enrolled in any courses.</p>
-    <a href="{% url 'course_list' %}" class="btn">Browse Courses</a>
-{% endif %}
-{% endblock %}
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: rgba(255, 255, 255, 0.85);
+            color: black;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .back-link:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .logout-link {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: rgba(255, 255, 255, 0.75);
+            color: black;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .logout-link:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .timetable-container {
+            background: rgba(255, 255, 255, 0.65);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .timetable-header {
+            background: rgba(255, 255, 255, 0.5);
+            color: black;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .timetable-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .week-info {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .week-navigation {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .week-arrow {
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(50, 45, 175, 0.5);
+            color: rgb(50,45,175,0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .week-arrow:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        .week-arrow:active {
+            transform: scale(0.95);
+        }
+
+        .days-panel {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .day-tab {
+            padding: 1.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgb(90,130,190);
+            border-right: 1px solid rgb(50,45,175,0.5);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .day-tab:last-child {
+            border-right: none;
+        }
+
+        .day-tab:hover {
+            background: #f8f9fa;
+        }
+
+        .day-tab.active {
+            background: linear-gradient(60deg, rgb(90, 130, 190) 0%, rgb(50, 45, 175) 100%);
+            color: white;
+        }
+
+        .day-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .day-date {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .schedule-view {
+            padding: 2rem;
+            min-height: 600px;
+        }
+
+        .day-schedule {
+            display: none;
+        }
+
+        .day-schedule.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .schedule-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .timeslots {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .timeslot {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .time-label {
+            font-weight: 600;
+            color: black;
+            font-size: 1.1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid rgb(50,45,175, 0.5);
+            text-align: center;
+        }
+
+        .timeslot-content {
+            min-height: 80px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            border: 2px solid rgb(50,45,175,0.5);
+            transition: all 0.3s ease;
+        }
+
+        .timeslot-content.has-course {
+            background: linear-gradient(60deg, rgb(90, 130, 190) 0%, rgb(50, 45, 175) 100%);
+            border: 2px solid rgb(50,45,175);
+            border-style: solid;
+        }
+
+        .timeslot-content:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid rgb(50,45,175);
+        }
+
+        .course-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .course-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .course-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .course-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .course-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .course-details {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            color: #666;
+            flex-wrap: wrap;
+        }
+
+        .course-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .empty-slot {
+            color: #999;
+            font-style: italic;
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .no-courses {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .no-courses h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .days-panel {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .days-panel {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .timeslot {
+                grid-template-columns: 100px 1fr;
+                gap: 0.5rem;
+            }
+
+            .time-label {
+                font-size: 0.9rem;
+                padding: 0.75rem 0.5rem;
+            }
+
+            .schedule-view {
+                padding: 1rem;
+            }
+
+            .timetable-header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-nav">
+            <a href="{% url 'student_dashboard' %}" class="back-link">← Zurück zum Dashboard</a>
+            <a href="{% url 'logout' %}" class="logout-link">Logout</a>
+        </div>
+
+        <div class="timetable-container">
+            <div class="timetable-header">
+                <h1>Stundenplan</h1>
+                <div class="week-navigation">
+                    <div class="week-arrow" onclick="changeWeek(-1)">←</div>
+                    <div class="week-info" id="week-info">Week 3 • January 13-19, 2026</div>
+                    <div class="week-arrow" onclick="changeWeek(1)">→</div>
+                </div>
+            </div>
+            <div class="days-panel">
+                <div class="day-tab active" onclick="showDay('monday')">
+                    <div class="day-name">Montag</div>
+                    <div class="day-date" id="date-monday">Jan 13</div>
+                </div>
+                <div class="day-tab" onclick="showDay('tuesday')">
+                    <div class="day-name">Dienstag</div>
+                    <div class="day-date" id="date-tuesday">Jan 14</div>
+                </div>
+                <div class="day-tab" onclick="showDay('wednesday')">
+                    <div class="day-name">Mittwoch</div>
+                    <div class="day-date" id="date-wednesday">Jan 15</div>
+                </div>
+                <div class="day-tab" onclick="showDay('thursday')">
+                    <div class="day-name">Donnerstag</div>
+                    <div class="day-date" id="date-thursday">Jan 16</div>
+                </div>
+                <div class="day-tab" onclick="showDay('friday')">
+                    <div class="day-name">Freitag</div>
+                    <div class="day-date" id="date-friday">Jan 17</div>
+                </div>
+                <div class="day-tab" onclick="showDay('saturday')">
+                    <div class="day-name">Samstag</div>
+                    <div class="day-date" id="date-saturday">Jan 18</div>
+                </div>
+                <div class="day-tab" onclick="showDay('sunday')">
+                    <div class="day-name">Sonntag</div>
+                    <div class="day-date" id="date-sunday">Jan 19</div>
+                </div>
+            </div>
+
+            <div class="schedule-view">
+                {% if enrolled_courses %}
+                    <!-- Monday Schedule -->
+                    <div class="day-schedule active" id="schedule-monday">
+                        <h2 class="schedule-title">Montag</h2>
+                        <div class="timeslots">
+                            {% for slot in time_slots %}
+                            <div class="timeslot">
+                                <div class="time-label">
+                                    {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
+                                </div>
+                                <div class="timeslot-content {% if schedule.monday|get_item:slot %}has-course{% endif %}">
+                                    {% with courses=schedule.monday|get_item:slot %}
+                                    {% if courses %}
+                                        {% for course in courses %}
+                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                            <div class="course-item">
+                                                <div class="course-title">{{ course.title }}</div>
+                                                <div class="course-details">
+                                                    <span class="course-detail">
+                                                        <span>👨‍🏫</span>
+                                                        <span>{{ course.teacher.name }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🏢</span>
+                                                        <span>{{ course.room }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🕐</span>
+                                                        <span>{{ course.schedule_time }}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="empty-slot">frei</div>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Tuesday Schedule -->
+                    <div class="day-schedule" id="schedule-tuesday">
+                        <h2 class="schedule-title">Dienstag</h2>
+                        <div class="timeslots">
+                            {% for slot in time_slots %}
+                            <div class="timeslot">
+                                <div class="time-label">
+                                    {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
+                                </div>
+                                <div class="timeslot-content {% if schedule.tuesday|get_item:slot %}has-course{% endif %}">
+                                    {% with courses=schedule.tuesday|get_item:slot %}
+                                    {% if courses %}
+                                        {% for course in courses %}
+                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                            <div class="course-item">
+                                                <div class="course-title">{{ course.title }}</div>
+                                                <div class="course-details">
+                                                    <span class="course-detail">
+                                                        <span>👨‍🏫</span>
+                                                        <span>{{ course.teacher.name }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🏢</span>
+                                                        <span>{{ course.room }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🕐</span>
+                                                        <span>{{ course.schedule_time }}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="empty-slot">frei</div>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Wednesday Schedule -->
+                    <div class="day-schedule" id="schedule-wednesday">
+                        <h2 class="schedule-title">Mittwoch</h2>
+                        <div class="timeslots">
+                            {% for slot in time_slots %}
+                            <div class="timeslot">
+                                <div class="time-label">
+                                    {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
+                                </div>
+                                <div class="timeslot-content {% if schedule.wednesday|get_item:slot %}has-course{% endif %}">
+                                    {% with courses=schedule.wednesday|get_item:slot %}
+                                    {% if courses %}
+                                        {% for course in courses %}
+                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                            <div class="course-item">
+                                                <div class="course-title">{{ course.title }}</div>
+                                                <div class="course-details">
+                                                    <span class="course-detail">
+                                                        <span>👨‍🏫</span>
+                                                        <span>{{ course.teacher.name }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🏢</span>
+                                                        <span>{{ course.room }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🕐</span>
+                                                        <span>{{ course.schedule_time }}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="empty-slot">frei</div>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Thursday Schedule -->
+                    <div class="day-schedule" id="schedule-thursday">
+                        <h2 class="schedule-title">Donnerstag</h2>
+                        <div class="timeslots">
+                            {% for slot in time_slots %}
+                            <div class="timeslot">
+                                <div class="time-label">
+                                    {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
+                                </div>
+                                <div class="timeslot-content {% if schedule.thursday|get_item:slot %}has-course{% endif %}">
+                                    {% with courses=schedule.thursday|get_item:slot %}
+                                    {% if courses %}
+                                        {% for course in courses %}
+                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                            <div class="course-item">
+                                                <div class="course-title">{{ course.title }}</div>
+                                                <div class="course-details">
+                                                    <span class="course-detail">
+                                                        <span>👨‍🏫</span>
+                                                        <span>{{ course.teacher.name }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🏢</span>
+                                                        <span>{{ course.room }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🕐</span>
+                                                        <span>{{ course.schedule_time }}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="empty-slot">frei</div>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Friday Schedule -->
+                    <div class="day-schedule" id="schedule-friday">
+                        <h2 class="schedule-title">Freitag</h2>
+                        <div class="timeslots">
+                            {% for slot in time_slots %}
+                            <div class="timeslot">
+                                <div class="time-label">
+                                    {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
+                                </div>
+                                <div class="timeslot-content {% if schedule.friday|get_item:slot %}has-course{% endif %}">
+                                    {% with courses=schedule.friday|get_item:slot %}
+                                    {% if courses %}
+                                        {% for course in courses %}
+                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                            <div class="course-item">
+                                                <div class="course-title">{{ course.title }}</div>
+                                                <div class="course-details">
+                                                    <span class="course-detail">
+                                                        <span>👨‍🏫</span>
+                                                        <span>{{ course.teacher.name }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🏢</span>
+                                                        <span>{{ course.room }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🕐</span>
+                                                        <span>{{ course.schedule_time }}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="empty-slot">frei</div>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Saturday Schedule -->
+                    <div class="day-schedule" id="schedule-saturday">
+                        <h2 class="schedule-title">Samstag</h2>
+                        <div class="timeslots">
+                            {% for slot in time_slots %}
+                            <div class="timeslot">
+                                <div class="time-label">
+                                    {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
+                                </div>
+                                <div class="timeslot-content {% if schedule.saturday|get_item:slot %}has-course{% endif %}">
+                                    {% with courses=schedule.saturday|get_item:slot %}
+                                    {% if courses %}
+                                        {% for course in courses %}
+                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                            <div class="course-item">
+                                                <div class="course-title">{{ course.title }}</div>
+                                                <div class="course-details">
+                                                    <span class="course-detail">
+                                                        <span>👨‍🏫</span>
+                                                        <span>{{ course.teacher.name }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🏢</span>
+                                                        <span>{{ course.room }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🕐</span>
+                                                        <span>{{ course.schedule_time }}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="empty-slot">frei</div>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Sunday Schedule -->
+                    <div class="day-schedule" id="schedule-sunday">
+                        <h2 class="schedule-title">Sonntag</h2>
+                        <div class="timeslots">
+                            {% for slot in time_slots %}
+                            <div class="timeslot">
+                                <div class="time-label">
+                                    {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
+                                </div>
+                                <div class="timeslot-content {% if schedule.sunday|get_item:slot %}has-course{% endif %}">
+                                    {% with courses=schedule.sunday|get_item:slot %}
+                                    {% if courses %}
+                                        {% for course in courses %}
+                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                            <div class="course-item">
+                                                <div class="course-title">{{ course.title }}</div>
+                                                <div class="course-details">
+                                                    <span class="course-detail">
+                                                        <span>👨‍🏫</span>
+                                                        <span>{{ course.teacher.name }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🏢</span>
+                                                        <span>{{ course.room }}</span>
+                                                    </span>
+                                                    <span class="course-detail">
+                                                        <span>🕐</span>
+                                                        <span>{{ course.schedule_time }}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="empty-slot">frei</div>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                {% else %}
+                    <div class="no-courses">
+                        <h3>No Courses Enrolled</h3>
+                        <p>You haven't enrolled in any courses yet.</p>
+                        <a href="{% url 'course_list' %}" class="back-link" style="margin-top: 1rem;">Browse Courses</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Track current week offset (0 = current week, -1 = previous, +1 = next)
+        let currentWeekOffset = 0;
+        let currentDayOfWeek = null; // Will store the currently selected day
+
+        function showDay(day) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.day-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Add active class to clicked tab
+            event.currentTarget.classList.add('active');
+            
+            // Hide all schedules
+            document.querySelectorAll('.day-schedule').forEach(schedule => {
+                schedule.classList.remove('active');
+            });
+            
+            // Show selected day schedule
+            document.getElementById('schedule-' + day).classList.add('active');
+            
+            // Remember the selected day
+            currentDayOfWeek = day;
+        }
+
+        function changeWeek(direction) {
+            // Update week offset
+            currentWeekOffset += direction;
+            
+            // Update the calendar
+            updateWeekInfo(currentWeekOffset);
+            
+            // Keep the same day of week selected
+            if (currentDayOfWeek) {
+                // Find and activate the tab for the current day
+                const dayTabs = document.querySelectorAll('.day-tab');
+                const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                const dayIndex = dayNames.indexOf(currentDayOfWeek);
+                
+                if (dayIndex !== -1 && dayTabs[dayIndex]) {
+                    // Remove active from all
+                    dayTabs.forEach(tab => tab.classList.remove('active'));
+                    // Add active to current day
+                    dayTabs[dayIndex].classList.add('active');
+                    
+                    // Show the schedule for that day
+                    document.querySelectorAll('.day-schedule').forEach(schedule => {
+                        schedule.classList.remove('active');
+                    });
+                    document.getElementById('schedule-' + currentDayOfWeek).classList.add('active');
+                }
+            }
+        }
+
+        // Calculate week info based on offset
+        function updateWeekInfo(weekOffset = 0) {
+            const now = new Date();
+            
+            // Calculate the target date based on week offset
+            const targetDate = new Date(now);
+            targetDate.setDate(now.getDate() + (weekOffset * 7));
+            
+            // Calculate week number
+            const startOfYear = new Date(targetDate.getFullYear(), 0, 1);
+            const days = Math.floor((targetDate - startOfYear) / (24 * 60 * 60 * 1000));
+            const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+            
+            // Get Monday of the target week
+            const currentDay = targetDate.getDay();
+            const diff = targetDate.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+            const monday = new Date(targetDate);
+            monday.setDate(diff);
+            
+            // Update dates for each day
+            const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+            
+            dayNames.forEach((day, index) => {
+                const date = new Date(monday);
+                date.setDate(monday.getDate() + index);
+                const dateElement = document.getElementById('date-' + day);
+                if (dateElement) {
+                    dateElement.textContent = date.getDate() + '. ' + months[date.getMonth()];
+                }
+            });
+            
+            // Update week info
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            const weekInfo = `KW ${weekNumber} • ${monday.getDate()}. ${months[monday.getMonth()]} - ${sunday.getDate()}. ${months[sunday.getMonth()]} ${monday.getFullYear()}`;
+            document.getElementById('week-info').textContent = weekInfo;
+        }
+
+        // Get current day of week (0 = Sunday, 1 = Monday, etc.)
+        function getCurrentDayName() {
+            const dayIndex = new Date().getDay();
+            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            return dayNames[dayIndex];
+        }
+
+        // Initialize on page load
+        updateWeekInfo(0);
+        
+        // Select today's day
+        const todayDayName = getCurrentDayName();
+        currentDayOfWeek = todayDayName;
+        
+        // Remove active from all tabs
+        document.querySelectorAll('.day-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Hide all schedules
+        document.querySelectorAll('.day-schedule').forEach(schedule => {
+            schedule.classList.remove('active');
+        });
+        
+        // Find and activate today's tab
+        const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        const todayIndex = dayNames.indexOf(todayDayName);
+        
+        if (todayIndex !== -1) {
+            const dayTabs = document.querySelectorAll('.day-tab');
+            if (dayTabs[todayIndex]) {
+                dayTabs[todayIndex].classList.add('active');
+            }
+            
+            // Show today's schedule
+            const todaySchedule = document.getElementById('schedule-' + todayDayName);
+            if (todaySchedule) {
+                todaySchedule.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>

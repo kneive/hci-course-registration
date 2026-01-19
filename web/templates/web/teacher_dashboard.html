@@ -1,69 +1,335 @@
-{% extends 'web/base.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}Teacher Dashboard{% endblock %}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('{% static "images/landing.jpg" %}');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            padding: 2rem 0;
+        }
 
-{% block content %}
-<h1>Teacher Dashboard</h1>
-<p>Welcome, {{ user.username }}!</p>
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 0;
+        }
 
-{% if not profile %}
-    <div class="card">
-        <h3>Create Your Profile</h3>
-        <p>You need to create a teacher profile before you can create courses.</p>
-        <a href="{% url 'teacher_profile_create' %}" class="btn">Create Profile</a>
-    </div>
-{% else %}
-    <div class="card">
-        <h3>Your Profile</h3>
-        <p><strong>Name:</strong> {{ profile.name }}</p>
-        <p><strong>Email:</strong> {{ profile.email }}</p>
-        <p><strong>Room:</strong> {{ profile.room }}</p>
-        <p><strong>Office Hours:</strong> {{ profile.office_hours|linebreaks }}</p>
-        <a href="{% url 'teacher_profile_edit' %}" class="btn">Edit Profile</a>
-    </div>
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            width: 90%;
+            margin: 0 auto;
+        }
 
-    <h2>My Courses</h2>
-    <a href="{% url 'course_create' %}" class="btn">Create New Course</a>
-    
-    {% if courses %}
-        {% for course in courses %}
-        <div class="card">
-            <h3>{{ course.title }}</h3>
-            <p><strong>Schedule:</strong> {{ course.schedule_time }}</p>
-            <p><strong>Room:</strong> {{ course.room }}</p>
-            <p><strong>Total Hours:</strong> {{ course.total_hours }}</p>
-            <p><strong>Enrolled Students:</strong> {{ course.students.count }}</p>
-            <p>{{ course.short_description }}</p>
-            
-            <h4>Exams</h4>
-            {% if course.exams.all %}
-                <ul>
-                    {% for exam in course.exams.all %}
-                    <li>
-                        {{ exam.title }} - {{ exam.date|date:"Y-m-d H:i" }} at {{ exam.location }}
-                        <form method="post" action="{% url 'exam_delete' exam.id %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this exam?')">Delete</button>
-                        </form>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>No exams scheduled</p>
-            {% endif %}
-            <a href="{% url 'exam_create' course.id %}" class="btn btn-secondary">Add Exam</a>
-            
-            <div style="margin-top: 1rem;">
-                <a href="{% url 'course_edit' course.id %}" class="btn">Edit Course</a>
-                <form method="post" action="{% url 'course_delete' course.id %}" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this course?')">Delete Course</button>
-                </form>
+        .logout-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .logout-link {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: rgba(255, 255, 255, 0.75);
+            color: black;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            margin: 0;
+        }
+
+        .logout-link:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .dashboard-container {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, .4);
+            border-radius: 20px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            animation: slideIn 0.6s ease-out;
+            backdrop-filter: blur(5px);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dashboard-header {
+            text-align: center;
+            padding: 1.5rem 1rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: black;
+            backdrop-filter: blur(5px);
+        }
+
+        .dashboard-header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard-header p {
+            font-size: 1rem;
+            opacity: 0.95;
+        }
+
+        .button-grid {
+            display: grid;
+            background: rgba(255, 255, 255, 0.45);
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .dashboard-card {
+            padding: 2.5rem 2rem;
+            background-color: rgb(255,255,255,0.75);
+            border-radius: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            min-height: 250px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            transition: all 0.4s ease;
+            z-index: 0;
+        }
+
+        .dashboard-card:hover::before {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .dashboard-card:hover {
+            transform: scale(1.03);
+            z-index: 1;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .dashboard-card:nth-child(1) .card-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .dashboard-card:nth-child(2) .card-icon {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .dashboard-card:nth-child(3) .card-icon {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .dashboard-card:nth-child(4) .card-icon {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .dashboard-card:hover .card-icon {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
+        }
+
+        .dashboard-card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .dashboard-card .subtitle {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-btn {
+            display: inline-block;
+            padding: 0.8rem 2.5rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .dashboard-card:nth-child(1) .card-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .dashboard-card:nth-child(2) .card-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .dashboard-card:nth-child(3) .card-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .dashboard-card:nth-child(4) .card-btn {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .card-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: #666;
+            font-size: 0.9rem;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .button-grid {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+
+            .dashboard-card {
+                min-height: 200px;
+                padding: 2rem 1.5rem;
+            }
+
+            .dashboard-header h1 {
+                font-size: 1.8rem;
+            }
+
+            .dashboard-container {
+                margin: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="logout-container">
+            <a href="{% url 'logout' %}" class="logout-link">Logout</a>
+        </div>
+        
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <h1>Dozenten Dashboard</h1>
+                <p>Willkommen, {{ user.username }}!</p>
+            </div>
+
+            <div class="button-grid">
+                <div class="dashboard-card" onclick="window.location.href='{% url 'teacher_courses' %}'">
+                    <div class="card-content">
+                        <h2>Meine Kurse</h2>
+                        <p class="subtitle">Kurse verwalten</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-card" onclick="window.location.href='{% url 'teacher_exams' %}'">
+                    <div class="card-content">
+                        <h2>Prüfungen</h2>
+                        <p class="subtitle">Verwalte Prüfungen</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-card" onclick="window.location.href='{% url 'course_create' %}'">
+                    <div class="card-content">
+                        <h2>Neuer Kurs</h2>
+                        <p class="subtitle">Neuen Kurs erstellen</p>
+                    </div>
+                </div>
+
+                {% if profile %}
+                <div class="dashboard-card" onclick="window.location.href='{% url 'teacher_profile_edit' %}'">
+                    <div class="card-content">
+                        <h2>Profil bearbeiten</h2>
+                        <p class="subtitle">Profil aktualisieren</p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="dashboard-card" onclick="window.location.href='{% url 'teacher_profile_create' %}'">
+                    <div class="card-content">
+                        <h2>Profil erstellen</h2>
+                        <p class="subtitle">Erstelle dein Dozentenprofil</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                
+            </div>
+
+            <div class="footer">
+                Kursverwaltung &copy; 2026
             </div>
         </div>
-        {% endfor %}
-    {% else %}
-        <p>You haven't created any courses yet.</p>
-    {% endif %}
-{% endif %}
-{% endblock %}
+    </div>
+</body>
+</html>

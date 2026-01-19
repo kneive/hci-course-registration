@@ -1,19 +1,329 @@
-{% extends 'web/base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Registration System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}Home{% endblock %}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('/static/images/landing.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
 
-{% block content %}
-<h1>Course Registration System</h1>
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 0;
+        }
 
-{% if user.is_authenticated %}
-    <p>Welcome back, {{ user.username }}!</p>
-    {% if user.role == 'student' %}
-        <a href="{% url 'student_dashboard' %}" class="btn">Go to Dashboard</a>
-    {% elif user.role == 'teacher' %}
-        <a href="{% url 'teacher_dashboard' %}" class="btn">Go to Dashboard</a>
+        .welcome-container {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 20px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+            width: 90%;
+            max-width: 600px;
+            max-height: 700px;
+            overflow: hidden;
+            animation: slideIn 0.6s ease-out;
+            backdrop-filter: blur(5px);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .welcome-header {
+            text-align: center;
+            padding: 3rem 2rem 2rem;
+            background: rgba(255, 255, 255, 0.25);
+            color: rgb(0, 0, 0);
+        }
+
+        .welcome-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .welcome-header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .button-container {
+            display: flex;
+            min-height: 350px;
+        }
+
+        .button-half {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem 2rem;
+            transition: all 0.4s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .button-half::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            transition: all 0.4s ease;
+            z-index: 0;
+            border-radius: 15px;
+        }
+
+        .button-half:hover::before {
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        .button-half:hover {
+            transform: scale(1.02);
+        }
+
+        .divider {
+            width: 2px;
+            background: linear-gradient(to bottom, 
+                transparent 0%, 
+                #e0e0e0 20%, 
+                #e0e0e0 80%, 
+                transparent 100%);
+        }
+
+        .button-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .login-half .icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .register-half .icon {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: black;
+            box-shadow: 0 10px 30px rgba(240, 147, 251, 0.3);
+        }
+
+        .button-half:hover .icon {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .button-content h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #030303;
+        }
+
+        .button-content p {
+            font-size: 1rem;
+            color: #050505;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .action-btn {
+            display: inline-block;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            color: white;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .register-btn {
+            background: linear-gradient(135deg, #fdf9fe 0%, #605859 100%);
+            color: rgb(0, 0, 0);
+        }
+
+        .register-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(240, 147, 251, 0.4);
+        }
+
+        .action-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.85);
+            color: #000000;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .button-container {
+                flex-direction: column;
+                min-height: auto;
+            }
+
+            .divider {
+                width: 100%;
+                height: 2px;
+                background: linear-gradient(to right, 
+                    transparent 0%, 
+                    #e0e0e0 20%, 
+                    #e0e0e0 80%, 
+                    transparent 100%);
+            }
+
+            .button-half {
+                padding: 2.5rem 2rem;
+            }
+
+            .welcome-header h1 {
+                font-size: 2rem;
+            }
+
+            .welcome-container {
+                margin: 1rem;
+            }
+        }
+
+        /* If user is already logged in */
+        .logged-in-container {
+            position: relative;
+            z-index: 1;
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        .logged-in-container h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .logged-in-container p {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .dashboard-btn {
+            display: inline-block;
+            padding: 1rem 3rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .dashboard-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    {% if user.is_authenticated %}
+        <!-- Logged in view -->
+        <div class="logged-in-container">
+            <div class="logo">CR</div>
+            <h1>Welcome, {{ user.username }}!</h1>
+            <p>You are already logged in.</p>
+            {% if user.role == 'student' %}
+                <a href="{% url 'student_dashboard' %}" class="dashboard-btn">Go to Dashboard</a>
+            {% elif user.role == 'teacher' %}
+                <a href="{% url 'teacher_dashboard' %}" class="dashboard-btn">Go to Dashboard</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <!-- Not logged in view -->
+        <div class="welcome-container">
+            <div class="welcome-header">
+                <div class="logo">
+                    <h1>Space University</h1>
+                </div>
+                <h2>Kursverwaltung</h2>
+            </div>
+
+            <div class="button-container">
+                <div class="button-half login-half" onclick="window.location.href='{% url 'login' %}'">
+                    <div class="button-content">
+                        <h2>Login</h2>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="button-half register-half" onclick="window.location.href='{% url 'register' %}'">
+                    <div class="button-content">
+                        <h2>Register</h2>                        
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                Kursverwaltung &copy; 2026
+            </div>
+        </div>
     {% endif %}
-{% else %}
-    <p>Please log in to access the course registration system.</p>
-    <a href="{% url 'login' %}" class="btn">Login</a>
-{% endif %}
-{% endblock %}
+</body>
+</html>

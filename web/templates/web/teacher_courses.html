@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vorlesungsverzeichnis</title>
+    <title>Meine Kurse</title>
     <style>
         * {
             margin: 0;
@@ -36,12 +36,19 @@
         .container {
             position: relative;
             z-index: 1;
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 2rem 1rem;
             height: 100vh;
             display: flex;
             flex-direction: column;
+        }
+
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
         }
 
         .back-link {
@@ -63,13 +70,6 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
 
-        .top-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
         .logout-link {
             display: inline-block;
             padding: 0.75rem 2rem;
@@ -89,8 +89,8 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
 
-        .search-box {
-            background: rgba(255, 255, 255, 0.65);
+        .header-box {
+            background: rgba(255, 255, 255, 0.85);
             border-radius: 15px;
             padding: 2rem;
             margin-bottom: 1.5rem;
@@ -110,60 +110,42 @@
             }
         }
 
-        .search-box h1 {
+        .header-box h1 {
             color: #333;
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
         }
 
-        .search-box p {
+        .header-box p {
             color: #666;
             font-size: 1.1rem;
-            margin-bottom: 1.5rem;
         }
 
-        .search-form {
-            display: flex;
-            gap: 0.5rem;
+        .header-actions {
+            margin-top: 1.5rem;
         }
 
-        .search-input {
-            flex: 1;
-            padding: 0.75rem 1.25rem;
-            border: 2px solid rgb(90,130,190);
-            border-radius: 50px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: rgb(50,45,175);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .btn {
+        .btn-create {
+            display: inline-block;
             padding: 0.75rem 2rem;
-            background: rgb(255,255,255);
+            background: rgb(255,255,255,0.85);
             color: black;
-            border: 1px solid rgb(90,130,190);
+            text-decoration: none;
             border-radius: 50px;
-            font-size: 1rem;
+            border: 1px solid rgb(90,130,190, 0.5);
             font-weight: 600;
-            cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(133, 133, 133, 0.5);
+            box-shadow: 0 4px 15px rgba(136, 136, 136, 0.3);
         }
 
-        .btn:hover {
+        .btn-create:hover {
             transform: translateY(-2px);
             border: 1px solid rgb(50,45,175);
-            box-shadow: 0 6px 20px rgba(133, 133, 133, 0.6);
+            box-shadow: 0 6px 20px rgba(136, 136, 136, 0.4);
         }
 
         .results-box {
-            background: rgba(255, 255, 255, 0.65);
+            background: rgba(255, 255, 255, 0.85);
             border-radius: 15px;
             padding: 1.5rem;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
@@ -222,73 +204,127 @@
             margin-bottom: 1rem;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
-            cursor: pointer;
-            border: 2px solid transparent;
+            border: 2px solid rgb(90,130,190);
+            border-left: 2px solid rgb(50,45,175);
         }
 
         .course-item:hover {
             transform: translateX(5px);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            border-color: #667eea;
+            border-color: rgb(50,45,175);
         }
 
         .course-item:last-child {
             margin-bottom: 0;
         }
 
+        .course-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
         .course-title {
             color: #333;
             font-size: 1.3rem;
             font-weight: 600;
-            margin-bottom: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex: 1;
         }
 
-        .enrolled-badge {
-            padding: 0.3rem 0.75rem;
+        .student-count-badge {
+            padding: 0.4rem 1rem;
             background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            color: black;
-            border-radius: 15px;
-            font-size: 0.75rem;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         .course-meta {
             display: grid;
             grid-template-columns: auto 1fr;
             gap: 0.5rem 1rem;
-            margin-bottom: 0.75rem;
+            margin-bottom: 1rem;
             font-size: 0.9rem;
         }
 
         .meta-label {
             font-weight: 600;
-            color: rgb(90,130,190);
+            color: #667eea;
         }
 
         .meta-value {
             color: #555;
         }
 
-        .meta-value a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .meta-value a:hover {
-            text-decoration: underline;
-        }
-
         .course-description {
             color: #666;
             line-height: 1.5;
             font-size: 0.9rem;
-            margin-top: 0.75rem;
-            padding-top: 0.75rem;
+            margin-bottom: 1rem;
+            padding-top: 1rem;
             border-top: 1px solid #e0e0e0;
+        }
+
+        .course-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            padding: 0.5rem 1.25rem;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-edit {
+            background: white;
+            border: 1px solid rgba(90,130,190,0.5);
+            box-shadow: 0 4px 15px rgba(133,133,133, 0.3);
+            color: black;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            border: 1px solid rgb(50,45,175);
+            box-shadow: 0 4px 15px rgba(133, 133, 133, 0.4);
+        }
+
+        .btn-exams {
+            background: white;
+            border: 1px solid rgba(90,130,190,0.5);
+            box-shadow: 0 4px 15px rgba(133,133,133, 0.3);
+            color: black;
+        }
+
+        .btn-exams:hover {
+            transform: translateY(-2px);
+            border: 1px solid rgb(50,45,175);
+            box-shadow: 0 4px 15px rgba(133, 133, 133, 0.4);
+        }
+
+        .btn-delete {
+            background: white;
+            border: 1px solid rgba(90,130,190,0.5);
+            box-shadow: 0 4px 15px rgba(133,133,133, 0.3);
+            color: black;
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            border: 1px solid rgb(50,45,175);
+            box-shadow: 0 4px 15px rgba(133, 133, 133, 0.4);
         }
 
         .no-courses {
@@ -305,6 +341,31 @@
 
         .no-courses p {
             font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .exams-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .exams-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: rgb(50,45,175);
+            margin-bottom: 0.5rem;
+        }
+
+        .exam-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .exam-item-small {
+            font-size: 0.85rem;
+            color: #666;
+            padding: 0.25rem 0;
         }
 
         /* Responsive design */
@@ -324,27 +385,29 @@
                 text-align: center;
             }
 
-            .search-box h1 {
+            .header-box h1 {
                 font-size: 2rem;
-            }
-
-            .search-form {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
             }
 
             .course-item {
                 padding: 1rem;
             }
 
+            .course-header {
+                flex-direction: column;
+            }
+
             .course-title {
                 font-size: 1.1rem;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.5rem;
+            }
+
+            .course-actions {
+                justify-content: stretch;
+            }
+
+            .btn-action {
+                flex: 1;
+                text-align: center;
             }
         }
     </style>
@@ -352,53 +415,35 @@
 <body>
     <div class="container">
         <div class="top-nav">
-            <a href="{% url 'student_dashboard' %}" class="back-link">← Zurück zum Dashboard</a>
+            <a href="{% url 'teacher_dashboard' %}" class="back-link">← Zurück zum Dashboard</a>
             <a href="{% url 'logout' %}" class="logout-link">Logout</a>
         </div>
 
-        <div class="search-box">
-            <h1>Vorlesungsverzeichnis</h1>
-            <p>Durchsuche und schreibe dich in verfügbare Kurse ein</p>
-            
-            <form method="get" class="search-form">
-                <input 
-                    type="text" 
-                    name="search" 
-                    class="search-input"
-                    placeholder="Suche nach Kursen, Dozenten oder Beschreibungen..." 
-                    value="{{ search_query }}"
-                >
-                <button type="submit" class="btn">Suchen</button>
-            </form>
+        <div class="header-box">
+            <h1>Meine Kurse</h1>
+            <p>Verwalte deine Kurse und Prüfungen</p>
+            <div class="header-actions">
+                <a href="{% url 'course_create' %}" class="btn-create">+ Neuen Kurs erstellen</a>
+            </div>
         </div>
 
         <div class="results-box">
             <div class="results-header">
-                <h2>Kurse</h2>
+                <h2>Deine Kurse</h2>
                 {% if courses %}
-                    <div class="results-count">{{ courses|length }} Kurs{{ courses|length|pluralize:"e" }} gefunden</div>
+                    <div class="results-count">{{ courses|length }} Kurs{{ courses|length|pluralize:"e" }}</div>
                 {% endif %}
             </div>
 
             <div class="courses-list">
                 {% if courses %}
                     {% for course in courses %}
-                    <div class="course-item" onclick="window.location.href='{% url 'course_detail' course.id %}'">
-                        <div class="course-title">
-                            <span>{{ course.title }}</span>
-                            {% if user in course.students.all %}
-                                <span class="enrolled-badge">✓ Eingeschrieben</span>
-                            {% endif %}
+                    <div class="course-item">
+                        <div class="course-header">
+                            <div class="course-title">{{ course.title }}</div>
                         </div>
 
                         <div class="course-meta">
-                            <span class="meta-label">Dozent:</span>
-                            <span class="meta-value">
-                                <a href="{% url 'teacher_profile_view' course.teacher.id %}" onclick="event.stopPropagation()">
-                                    {{ course.teacher.name }}
-                                </a>
-                            </span>
-
                             <span class="meta-label">Zeit:</span>
                             <span class="meta-value">{{ course.schedule_time }}</span>
 
@@ -408,19 +453,42 @@
                             <span class="meta-label">Stunden:</span>
                             <span class="meta-value">{{ course.total_hours }} Stunden</span>
 
-                            <span class="meta-label">Teilnehmer:</span>
-                            <span class="meta-value">{{ course.students.count }} eingeschrieben</span>
+                            <span class="meta-label">Anmeldungen:</span>
+                            <span class="meta-value">{{ course.students.count }}</span>
                         </div>
 
                         <div class="course-description">
                             {{ course.short_description }}
                         </div>
+
+                        {% if course.exams.all %}
+                        <div class="exams-section">
+                            <div class="exams-title">Prüfungen ({{ course.exams.count }})</div>
+                            <ul class="exam-list">
+                                {% for exam in course.exams.all %}
+                                <li class="exam-item-small">
+                                    {{ exam.title }} - {{ exam.date|date:"d.m.Y H:i" }} ({{ exam.location }})
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <div class="course-actions">
+                            <a href="{% url 'course_edit' course.id %}" class="btn-action btn-edit">Bearbeiten</a>
+                            <a href="{% url 'exam_create' course.id %}" class="btn-action btn-exams">Prüfung hinzufügen</a>
+                            <form method="post" action="{% url 'course_delete' course.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-action btn-delete" onclick="return confirm('Möchtest du diesen Kurs wirklich löschen?')">Löschen</button>
+                            </form>
+                        </div>
                     </div>
                     {% endfor %}
                 {% else %}
                     <div class="no-courses">
-                        <h2>Keine Kurse gefunden</h2>
-                        <p>{% if search_query %}Versuche einen anderen Suchbegriff{% else %}Momentan sind keine Kurse verfügbar{% endif %}</p>
+                        <h2>Noch keine Kurse</h2>
+                        <p>Du hast noch keine Kurse erstellt.</p>
+                        <a href="{% url 'course_create' %}" class="btn-create">+ Ersten Kurs erstellen</a>
                     </div>
                 {% endif %}
             </div>
