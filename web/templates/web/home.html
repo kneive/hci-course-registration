@@ -286,12 +286,12 @@
         <!-- Logged in view -->
         <div class="logged-in-container">
             <div class="logo">CR</div>
-            <h1>Welcome, {{ user.username }}!</h1>
-            <p>You are already logged in.</p>
+            <h1>Willkommen, {{ user.username }}!</h1>
+            <p>Sie sind bereits angemeldet.</p>
             {% if user.role == 'student' %}
-                <a href="{% url 'student_dashboard' %}" class="dashboard-btn">Go to Dashboard</a>
+                <a href="{% url 'student_dashboard' %}" class="dashboard-btn">Zum Dashboard</a>
             {% elif user.role == 'teacher' %}
-                <a href="{% url 'teacher_dashboard' %}" class="dashboard-btn">Go to Dashboard</a>
+                <a href="{% url 'teacher_dashboard' %}" class="dashboard-btn">Zum Dashboard</a>
             {% endif %}
         </div>
     {% else %}
@@ -307,7 +307,7 @@
             <div class="button-container">
                 <div class="button-half login-half" onclick="window.location.href='{% url 'login' %}'">
                     <div class="button-content">
-                        <h2>Login</h2>
+                        <h2>Anmelden</h2>
                     </div>
                 </div>
                 

@@ -6,9 +6,9 @@
 <h1>{{ teacher_profile.name }}</h1>
 
 <div class="card">
-    <p><strong>Email:</strong> <a href="mailto:{{ teacher_profile.email }}">{{ teacher_profile.email }}</a></p>
-    <p><strong>Room:</strong> {{ teacher_profile.room }}</p>
-    <p><strong>Office Hours (Sprechstunde):</strong></p>
+    <p><strong>E-mail:</strong> <a href="mailto:{{ teacher_profile.email }}">{{ teacher_profile.email }}</a></p>
+    <p><strong>Raum:</strong> {{ teacher_profile.room }}</p>
+    <p><strong>Sprechstunde:</strong></p>
     <p>{{ teacher_profile.office_hours|linebreaks }}</p>
 </div>
 
@@ -23,8 +23,8 @@
     </div>
     {% endfor %}
 {% else %}
-    <p>This teacher has no courses.</p>
+    <p>Keine Kurse erstellt.</p>
 {% endif %}
 
-<a href="" class="btn btn-secondary">Back to Teacher List</a>
+<a href="" class="btn btn-secondary">Zurück [broken]</a>
 {% endblock %}

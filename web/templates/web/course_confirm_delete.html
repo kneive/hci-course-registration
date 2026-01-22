@@ -6,14 +6,14 @@
 <h1>Delete Course</h1>
 
 <div class="card">
-    <p>Are you sure you want to delete the course <strong>{{ course.title }}</strong>?</p>
-    <p>This action cannot be undone. All associated exams will also be deleted.</p>
-    <p><strong>Enrolled Students:</strong> {{ course.students.count }}</p>
+    <p>Sind Sie sicher, dass Sie den Kurs <strong>{{ course.title }}</strong> löschen möchten?</p>
+    <p>Diese Aktion kann nicht rückgängig gemacht werden. Alle zugehörigen Prüfungen werden ebenfalls gelöscht.</p>
+    <p><strong>Angemeldet:</strong> {{ course.students.count }}</p>
 </div>
 
 <form method="post">
     {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Yes, Delete Course</button>
-    <a href="{% url 'teacher_dashboard' %}" class="btn btn-secondary">Cancel</a>
+    <button type="submit" class="btn btn-danger">Ja, Kurs löschen</button>
+    <a href="{% url 'teacher_dashboard' %}" class="btn btn-secondary">Abbrechen</a>
 </form>
 {% endblock %}

@@ -6,15 +6,15 @@
 <h1>Delete Exam</h1>
 
 <div class="card">
-    <p>Are you sure you want to delete the exam <strong>{{ exam.title }}</strong>?</p>
-    <p><strong>Course:</strong> {{ exam.course.title }}</p>
-    <p><strong>Date:</strong> {{ exam.date|date:"Y-m-d H:i" }}</p>
-    <p>This action cannot be undone.</p>
+    <p>Sind Sie sicher, dass Sie die Prüfung <strong>{{ exam.title }}</strong> löschen wollen?</p>
+    <p><strong>Kurs:</strong> {{ exam.course.title }}</p>
+    <p><strong>Datum:</strong> {{ exam.date|date:"Y-m-d H:i" }}</p>
+    <p>Diese Aktion kann nicht rückgängig gemacht werden.</p>
 </div>
 
 <form method="post">
     {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Yes, Delete Exam</button>
-    <a href="{% url 'teacher_dashboard' %}" class="btn btn-secondary">Cancel</a>
+    <button type="submit" class="btn btn-danger">Ja, Prüfung löschen.</button>
+    <a href="{% url 'teacher_dashboard' %}" class="btn btn-secondary">Abbrechen</a>
 </form>
 {% endblock %}
