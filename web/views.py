@@ -144,99 +144,84 @@ def student_timetable(request):
     
     enrolled_courses = request.user.enrolled_courses.all()
     
-    # Parse schedule_time and organize courses by day and time
-    schedule = {
-        'monday': [],
-        'tuesday': [],
-        'wednesday': [],
-        'thursday': [],
-        'friday': [],
-        'saturday': [],
-        'sunday': []
-    }
-    
     # Time slots (2-hour blocks from 6:00 to 22:00)
     time_slots = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00']
     
-    # Day name mappings
-    day_mappings = {
-        'mon': 'monday', 'monday': 'monday', 'm': 'monday',
-        'tue': 'tuesday', 'tuesday': 'tuesday', 'tu': 'tuesday',
-        'wed': 'wednesday', 'wednesday': 'wednesday', 'w': 'wednesday',
-        'thu': 'thursday', 'thursday': 'thursday', 'th': 'thursday',
-        'fri': 'friday', 'friday': 'friday', 'f': 'friday',
-        'sat': 'saturday', 'saturday': 'saturday', 'sa': 'saturday',
-        'sun': 'sunday', 'sunday': 'sunday', 'su': 'sunday'
-    }
+    # Initialize schedule structure
+    schedule_by_slots = {}
+    for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
+        schedule_by_slots[day] = {}
+        for slot in time_slots:
+            schedule_by_slots[day][slot] = {'courses': [], 'spans': {}, 'skip': False}
     
-    # Multi-day abbreviations
-    multi_day_mappings = {
-        'mwf': ['monday', 'wednesday', 'friday'],
-        'mw': ['monday', 'wednesday'],
-        'tr': ['tuesday', 'thursday'],
-        'tth': ['tuesday', 'thursday'],
-        'mf': ['monday', 'friday']
+    # Day name mappings (German to English keys)
+    day_mappings = {
+        'montag': 'monday',
+        'dienstag': 'tuesday', 
+        'mittwoch': 'wednesday',
+        'donnerstag': 'thursday',
+        'freitag': 'friday',
+        'samstag': 'saturday',
+        'sonntag': 'sunday',
+        # Also support English names for backward compatibility
+        'monday': 'monday',
+        'tuesday': 'tuesday',
+        'wednesday': 'wednesday',
+        'thursday': 'thursday',
+        'friday': 'friday',
+        'saturday': 'saturday',
+        'sunday': 'sunday'
     }
     
     import re
     
     for course in enrolled_courses:
-        schedule_time = course.schedule_time.strip()
+        if not course.schedule_time:
+            continue
         
-        # Try to parse the schedule_time
-        match = re.match(r'([A-Za-z/]+)\s+(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})', schedule_time, re.IGNORECASE)
+        # Split by semicolon for multiple schedule entries
+        schedule_entries = course.schedule_time.split(';')
         
-        if match:
-            day_part = match.group(1).lower()
-            start_hour = int(match.group(2))
-            start_min = match.group(3)
-            end_hour = int(match.group(4))
-            end_min = match.group(5)
+        for schedule_entry in schedule_entries:
+            schedule_entry = schedule_entry.strip()
             
-            # Determine which days this course is on
-            days = []
+            # Parse format: "Monday 10:00-12:00"
+            match = re.match(r'(\w+)\s+(\d{2}):(\d{2})-(\d{2}):(\d{2})', schedule_entry, re.IGNORECASE)
             
-            # Check for multi-day abbreviations
-            day_part_clean = day_part.replace('/', '').replace(',', '').replace(' ', '')
-            if day_part_clean in multi_day_mappings:
-                days = multi_day_mappings[day_part_clean]
-            else:
-                # Check for slash or comma separated days
-                if '/' in day_part or ',' in day_part:
-                    day_parts = re.split(r'[/,\s]+', day_part)
-                    for dp in day_parts:
-                        dp = dp.strip()
-                        if dp in day_mappings:
-                            days.append(day_mappings[dp])
-                else:
-                    # Single day
-                    if day_part in day_mappings:
-                        days.append(day_mappings[day_part])
-            
-            # Find which time slot this course belongs to
-            start_time_str = f"{start_hour:02d}:00"
-            
-            # Add course info with time slot
-            for day in days:
-                if day in schedule:
-                    schedule[day].append({
-                        'course': course,
-                        'start_hour': start_hour,
-                        'time_slot': start_time_str
-                    })
-    
-    # Organize by time slots for each day
-    schedule_by_slots = {}
-    for day in schedule.keys():
-        schedule_by_slots[day] = {}
-        for slot in time_slots:
-            schedule_by_slots[day][slot] = []
-            slot_hour = int(slot.split(':')[0])
-            
-            # Find courses that fit in this slot
-            for course_info in schedule[day]:
-                if slot_hour <= course_info['start_hour'] < slot_hour + 2:
-                    schedule_by_slots[day][slot].append(course_info['course'])
+            if match:
+                day_name = match.group(1).lower()
+                start_hour = int(match.group(2))
+                start_min = match.group(3)
+                end_hour = int(match.group(4))
+                end_min = match.group(5)
+                
+                # Map day name to key
+                day_key = day_mappings.get(day_name)
+                
+                if day_key:
+                    # Find which time slots this course overlaps
+                    overlapping_slots = []
+                    for slot in time_slots:
+                        slot_hour = int(slot.split(':')[0])
+                        slot_end_hour = slot_hour + 2
+                        
+                        # Check if course overlaps with this time slot
+                        if start_hour < slot_end_hour and end_hour > slot_hour:
+                            overlapping_slots.append(slot)
+                    
+                    # Only add course to the first overlapping slot
+                    if overlapping_slots:
+                        first_slot = overlapping_slots[0]
+                        span_count = len(overlapping_slots)
+                        
+                        # Add course to first slot with span info
+                        if course not in schedule_by_slots[day_key][first_slot]['courses']:
+                            schedule_by_slots[day_key][first_slot]['courses'].append(course)
+                            schedule_by_slots[day_key][first_slot]['spans'][course.id] = span_count
+                        
+                        # Mark subsequent slots to skip rendering
+                        for skip_slot in overlapping_slots[1:]:
+                            schedule_by_slots[day_key][skip_slot]['skip'] = True
     
     return render(request, 'web/student_timetable.html', {
         'enrolled_courses': enrolled_courses,

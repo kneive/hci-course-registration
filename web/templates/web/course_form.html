@@ -276,17 +276,63 @@
         }
 
         .schedule-builder {
-            background: rgba(255,255,255, 0.55);
+            background: #f8f9fa;
             padding: 1.5rem;
             border-radius: 8px;
-            border: 1px solid rgb(90,130,190);
+            border: 2px solid #e0e0e0;
+        }
+
+        #schedule-entries {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .schedule-entry {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            position: relative;
+        }
+
+        .schedule-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .entry-number {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1rem;
+        }
+
+        .btn-remove-entry {
+            padding: 0.25rem 0.75rem;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-remove-entry:hover {
+            background: #ee5a6f;
+            transform: scale(1.05);
         }
 
         .schedule-row {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr;
             gap: 1rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0;
         }
 
         .schedule-field {
@@ -303,7 +349,7 @@
 
         .schedule-input {
             padding: 0.75rem;
-            border: 2px solid rgb(90,130,190);
+            border: 2px solid #e0e0e0;
             border-radius: 6px;
             font-size: 0.95rem;
             background: white;
@@ -312,15 +358,34 @@
 
         .schedule-input:focus {
             outline: none;
-            border-color: rgb(50,45,175);
+            border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-add-schedule {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .btn-add-schedule:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
         }
 
         .schedule-preview {
             padding: 1rem;
             background: white;
             border-radius: 6px;
-            border: 2px solid rgb(90,130,190);
+            border: 2px dashed #667eea;
             color: #333;
             font-size: 0.95rem;
         }
@@ -331,18 +396,20 @@
 
         #preview-text {
             color: #666;
+            display: block;
+            margin-top: 0.5rem;
+            white-space: pre-line;
         }
 
-        @media (max-width: 768px) {
-            .schedule-row {
-                grid-template-columns: 1fr;
-            }
-        }
 
         /* Responsive design */
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
+            }
+
+            .schedule-row {
+                grid-template-columns: 1fr;
             }
 
             .top-nav {
@@ -445,59 +512,14 @@
                     <div class="form-group">
                         <label for="id_schedule_time">Kurszeiten</label>
                         <div class="schedule-builder">
-                            <div class="schedule-row">
-                                <div class="schedule-field">
-                                    <label class="small-label">Wochentag(e)</label>
-                                    <select id="day-select" class="schedule-input">
-                                        <option value="">Wähle Tage...</option>
-                                        <option value="monday">Montag</option>
-                                        <option value="tuesday">Dienstag</option>
-                                        <option value="wednesday">Mittwoch</option>
-                                        <option value="thursday">Donnerstag</option>
-                                        <option value="friday">Freitag</option>
-                                        <option value="saturday">Samstag</option>
-                                        <option value="sunday">Sonntag</option>
-                                        <optgroup label="Mehrere Tage">
-                                            <option value="mwf">Mo/Mi/Fr</option>
-                                            <option value="tr">Di/Do</option>
-                                            <option value="mw">Mo/Mi</option>
-                                        </optgroup>
-                                    </select>
-                                </div>
-                                
-                                <div class="schedule-field">
-                                    <label class="small-label">Startzeit</label>
-                                    <select id="start-time" class="schedule-input">
-                                        <option value="">Start...</option>
-                                        <option value="06:00">06:00</option>
-                                        <option value="08:00">08:00</option>
-                                        <option value="10:00">10:00</option>
-                                        <option value="12:00">12:00</option>
-                                        <option value="14:00">14:00</option>
-                                        <option value="16:00">16:00</option>
-                                        <option value="18:00">18:00</option>
-                                        <option value="20:00">20:00</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="schedule-field">
-                                    <label class="small-label">Endzeit</label>
-                                    <select id="end-time" class="schedule-input">
-                                        <option value="">Ende...</option>
-                                        <option value="08:00">08:00</option>
-                                        <option value="10:00">10:00</option>
-                                        <option value="12:00">12:00</option>
-                                        <option value="14:00">14:00</option>
-                                        <option value="16:00">16:00</option>
-                                        <option value="18:00">18:00</option>
-                                        <option value="20:00">20:00</option>
-                                        <option value="22:00">22:00</option>
-                                    </select>
-                                </div>
+                            <div id="schedule-entries">
+                                <!-- Schedule entries will be added here -->
                             </div>
                             
+                            <button type="button" class="btn-add-schedule" onclick="addScheduleEntry()">+ Weiteren Termin hinzufügen</button>
+                            
                             <div class="schedule-preview" id="schedule-preview">
-                                <strong>Vorschau:</strong> <span id="preview-text">Bitte wähle Wochentag und Zeiten</span>
+                                <strong>Vorschau:</strong> <span id="preview-text">Keine Termine hinzugefügt</span>
                             </div>
                         </div>
                         
@@ -558,41 +580,128 @@
     </div>
 </body>
 <script>
+    let scheduleEntryCount = 0;
+    const scheduleEntries = [];
+
     // Day name mappings
     const dayMappings = {
-        'monday': 'Monday',
-        'tuesday': 'Tuesday',
-        'wednesday': 'Wednesday',
-        'thursday': 'Thursday',
-        'friday': 'Friday',
-        'saturday': 'Saturday',
-        'sunday': 'Sunday',
-        'mwf': 'MWF',
-        'tr': 'TR',
-        'mw': 'MW'
+        'monday': 'Montag',
+        'tuesday': 'Dienstag',
+        'wednesday': 'Mittwoch',
+        'thursday': 'Donnerstag',
+        'friday': 'Freitag',
+        'saturday': 'Samstag',
+        'sunday': 'Sonntag'
     };
 
-    const daySelect = document.getElementById('day-select');
-    const startTime = document.getElementById('start-time');
-    const endTime = document.getElementById('end-time');
-    const scheduleTimeInput = document.getElementById('id_schedule_time');
-    const previewText = document.getElementById('preview-text');
+    function addScheduleEntry(day = '', startTime = '', endTime = '') {
+        scheduleEntryCount++;
+        const entryId = scheduleEntryCount;
+        
+        const entryHtml = `
+            <div class="schedule-entry" id="entry-${entryId}">
+                <div class="schedule-entry-header">
+                    <span class="entry-number">Termin ${entryId}</span>
+                    <button type="button" class="btn-remove-entry" onclick="removeScheduleEntry(${entryId})">Entfernen</button>
+                </div>
+                <div class="schedule-row">
+                    <div class="schedule-field">
+                        <label class="small-label">Wochentag</label>
+                        <select class="schedule-input day-select" data-entry="${entryId}">
+                            <option value="">Wähle Tag...</option>
+                            <option value="monday" ${day === 'monday' ? 'selected' : ''}>Montag</option>
+                            <option value="tuesday" ${day === 'tuesday' ? 'selected' : ''}>Dienstag</option>
+                            <option value="wednesday" ${day === 'wednesday' ? 'selected' : ''}>Mittwoch</option>
+                            <option value="thursday" ${day === 'thursday' ? 'selected' : ''}>Donnerstag</option>
+                            <option value="friday" ${day === 'friday' ? 'selected' : ''}>Freitag</option>
+                            <option value="saturday" ${day === 'saturday' ? 'selected' : ''}>Samstag</option>
+                            <option value="sunday" ${day === 'sunday' ? 'selected' : ''}>Sonntag</option>
+                        </select>
+                    </div>
+                    
+                    <div class="schedule-field">
+                        <label class="small-label">Startzeit</label>
+                        <select class="schedule-input start-time" data-entry="${entryId}">
+                            <option value="">Start...</option>
+                            <option value="06:00" ${startTime === '06:00' ? 'selected' : ''}>06:00</option>
+                            <option value="08:00" ${startTime === '08:00' ? 'selected' : ''}>08:00</option>
+                            <option value="10:00" ${startTime === '10:00' ? 'selected' : ''}>10:00</option>
+                            <option value="12:00" ${startTime === '12:00' ? 'selected' : ''}>12:00</option>
+                            <option value="14:00" ${startTime === '14:00' ? 'selected' : ''}>14:00</option>
+                            <option value="16:00" ${startTime === '16:00' ? 'selected' : ''}>16:00</option>
+                            <option value="18:00" ${startTime === '18:00' ? 'selected' : ''}>18:00</option>
+                            <option value="20:00" ${startTime === '20:00' ? 'selected' : ''}>20:00</option>
+                        </select>
+                    </div>
+                    
+                    <div class="schedule-field">
+                        <label class="small-label">Endzeit</label>
+                        <select class="schedule-input end-time" data-entry="${entryId}">
+                            <option value="">Ende...</option>
+                            <option value="08:00" ${endTime === '08:00' ? 'selected' : ''}>08:00</option>
+                            <option value="10:00" ${endTime === '10:00' ? 'selected' : ''}>10:00</option>
+                            <option value="12:00" ${endTime === '12:00' ? 'selected' : ''}>12:00</option>
+                            <option value="14:00" ${endTime === '14:00' ? 'selected' : ''}>14:00</option>
+                            <option value="16:00" ${endTime === '16:00' ? 'selected' : ''}>16:00</option>
+                            <option value="18:00" ${endTime === '18:00' ? 'selected' : ''}>18:00</option>
+                            <option value="20:00" ${endTime === '20:00' ? 'selected' : ''}>20:00</option>
+                            <option value="22:00" ${endTime === '22:00' ? 'selected' : ''}>22:00</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('schedule-entries').insertAdjacentHTML('beforeend', entryHtml);
+        
+        // Add event listeners
+        const entry = document.getElementById(`entry-${entryId}`);
+        entry.querySelector('.day-select').addEventListener('change', updateSchedule);
+        entry.querySelector('.start-time').addEventListener('change', updateSchedule);
+        entry.querySelector('.end-time').addEventListener('change', updateSchedule);
+        
+        updateSchedule();
+    }
+
+    function removeScheduleEntry(entryId) {
+        const entry = document.getElementById(`entry-${entryId}`);
+        if (entry) {
+            entry.remove();
+            updateSchedule();
+        }
+    }
 
     function updateSchedule() {
-        const day = daySelect.value;
-        const start = startTime.value;
-        const end = endTime.value;
-
-        if (day && start && end) {
-            const dayName = dayMappings[day];
-            const scheduleString = `${dayName} ${start}-${end}`;
-            scheduleTimeInput.value = scheduleString;
-            previewText.textContent = scheduleString;
+        const entries = document.querySelectorAll('.schedule-entry');
+        const scheduleStrings = [];
+        
+        entries.forEach(entry => {
+            const daySelect = entry.querySelector('.day-select');
+            const startTime = entry.querySelector('.start-time');
+            const endTime = entry.querySelector('.end-time');
+            
+            const day = daySelect.value;
+            const start = startTime.value;
+            const end = endTime.value;
+            
+            if (day && start && end) {
+                const dayName = dayMappings[day];
+                scheduleStrings.push(`${dayName} ${start}-${end}`);
+            }
+        });
+        
+        const scheduleTimeInput = document.getElementById('id_schedule_time');
+        const previewText = document.getElementById('preview-text');
+        
+        if (scheduleStrings.length > 0) {
+            const fullSchedule = scheduleStrings.join('; ');
+            scheduleTimeInput.value = fullSchedule;
+            previewText.textContent = scheduleStrings.join('\n');
             previewText.style.color = '#333';
             previewText.style.fontWeight = '600';
         } else {
             scheduleTimeInput.value = '';
-            previewText.textContent = 'Bitte wähle Wochentag und Zeiten';
+            previewText.textContent = 'Keine Termine hinzugefügt';
             previewText.style.color = '#666';
             previewText.style.fontWeight = 'normal';
         }
@@ -600,33 +709,39 @@
 
     // Parse existing value if editing
     function parseExistingSchedule() {
-        const existingValue = scheduleTimeInput.value;
+        const existingValue = document.getElementById('id_schedule_time').value;
         if (existingValue) {
-            // Parse format like "Monday 10:00-12:00" or "MWF 08:00-10:00"
-            const match = existingValue.match(/^(\w+)\s+(\d{2}:\d{2})-(\d{2}:\d{2})$/);
-            if (match) {
-                const dayPart = match[1];
-                const startPart = match[2];
-                const endPart = match[3];
-
-                // Find matching day option
-                for (const [key, value] of Object.entries(dayMappings)) {
-                    if (value === dayPart) {
-                        daySelect.value = key;
-                        break;
+            // Parse format like "Monday 10:00-12:00; Wednesday 14:00-16:00"
+            const entries = existingValue.split(';').map(s => s.trim());
+            
+            entries.forEach(entry => {
+                const match = entry.match(/^(\w+)\s+(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+                if (match) {
+                    const dayName = match[1];
+                    const startTime = match[2];
+                    const endTime = match[3];
+                    
+                    // Find matching day key
+                    let dayKey = '';
+                    for (const [key, value] of Object.entries(dayMappings)) {
+                        if (value === dayName) {
+                            dayKey = key;
+                            break;
+                        }
+                    }
+                    
+                    if (dayKey) {
+                        addScheduleEntry(dayKey, startTime, endTime);
                     }
                 }
-
-                startTime.value = startPart;
-                endTime.value = endPart;
-                updateSchedule();
-            }
+            });
+        }
+        
+        // If no entries were added, add one empty entry
+        if (scheduleEntryCount === 0) {
+            addScheduleEntry();
         }
     }
-
-    daySelect.addEventListener('change', updateSchedule);
-    startTime.addEventListener('change', updateSchedule);
-    endTime.addEventListener('change', updateSchedule);
 
     // Initialize on page load
     parseExistingSchedule();

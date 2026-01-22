@@ -10,6 +10,8 @@ migrations/
 
 old/
 stock/
+palette/
 
 # random files
 *.env
+*.odp

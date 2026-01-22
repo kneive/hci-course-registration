@@ -446,7 +446,7 @@
                             {% endfor %}
                         </div>
                     {% else %}
-                        <div class="no-exams">No exams scheduled for this course yet.</div>
+                        <div class="no-exams">Keine anstehenden Prüfungen für diesen Kurs.</div>
                     {% endif %}
                 </div>
 
@@ -455,7 +455,7 @@
                         {% if is_enrolled %}
                             <form method="post" action="{% url 'unenroll_course' course.id %}" style="flex: 1;">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-quit" onclick="return confirm('Are you sure you want to quit this course?')">
+                                <button type="submit" class="btn btn-quit" onclick="return confirm('Wollen Sie sich wirklich abmelden?')">
                                     Abmelden
                                 </button>
                             </form>

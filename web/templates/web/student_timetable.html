@@ -235,6 +235,7 @@
             grid-template-columns: 120px 1fr;
             gap: 1rem;
             align-items: start;
+            position: relative;
         }
 
         .time-label {
@@ -246,6 +247,10 @@
             border-radius: 10px;
             border: 1px solid rgb(50,45,175, 0.5);
             text-align: center;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .timeslot-content {
@@ -255,6 +260,7 @@
             padding: 1rem;
             border: 2px solid rgb(50,45,175,0.5);
             transition: all 0.3s ease;
+            position: relative;
         }
 
         .timeslot-content.has-course {
@@ -267,6 +273,13 @@
             transform: translateX(5px);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             border: 2px solid rgb(50,45,175);
+        }
+
+        .timeslot-content.spanning {
+            position: absolute;
+            left: 0;
+            right: 0;
+            z-index: 10;
         }
 
         .course-link {
@@ -332,6 +345,16 @@
             margin-bottom: 1rem;
         }
 
+        .timeslots {
+            display: grid;
+            gap: 0.75rem;
+            position: relative;
+        }
+
+        .timeslot-wrapper {
+            position: relative;
+        }
+
         /* Responsive design */
         @media (max-width: 1024px) {
             .days-panel {
@@ -381,31 +404,31 @@
                 </div>
             </div>
             <div class="days-panel">
-                <div class="day-tab active" onclick="showDay('monday')">
+                <div class="day-tab active" onclick="showDay('monday', event)">
                     <div class="day-name">Montag</div>
                     <div class="day-date" id="date-monday">Jan 13</div>
                 </div>
-                <div class="day-tab" onclick="showDay('tuesday')">
+                <div class="day-tab" onclick="showDay('tuesday', event)">
                     <div class="day-name">Dienstag</div>
                     <div class="day-date" id="date-tuesday">Jan 14</div>
                 </div>
-                <div class="day-tab" onclick="showDay('wednesday')">
+                <div class="day-tab" onclick="showDay('wednesday', event)">
                     <div class="day-name">Mittwoch</div>
                     <div class="day-date" id="date-wednesday">Jan 15</div>
                 </div>
-                <div class="day-tab" onclick="showDay('thursday')">
+                <div class="day-tab" onclick="showDay('thursday', event)">
                     <div class="day-name">Donnerstag</div>
                     <div class="day-date" id="date-thursday">Jan 16</div>
                 </div>
-                <div class="day-tab" onclick="showDay('friday')">
+                <div class="day-tab" onclick="showDay('friday', event)">
                     <div class="day-name">Freitag</div>
                     <div class="day-date" id="date-friday">Jan 17</div>
                 </div>
-                <div class="day-tab" onclick="showDay('saturday')">
+                <div class="day-tab" onclick="showDay('saturday', event)">
                     <div class="day-name">Samstag</div>
                     <div class="day-date" id="date-saturday">Jan 18</div>
                 </div>
-                <div class="day-tab" onclick="showDay('sunday')">
+                <div class="day-tab" onclick="showDay('sunday', event)">
                     <div class="day-name">Sonntag</div>
                     <div class="day-date" id="date-sunday">Jan 19</div>
                 </div>
@@ -422,32 +445,44 @@
                                 <div class="time-label">
                                     {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
                                 </div>
-                                <div class="timeslot-content {% if schedule.monday|get_item:slot %}has-course{% endif %}">
-                                    {% with courses=schedule.monday|get_item:slot %}
-                                    {% if courses %}
-                                        {% for course in courses %}
-                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
-                                            <div class="course-item">
-                                                <div class="course-title">{{ course.title }}</div>
-                                                <div class="course-details">
-                                                    <span class="course-detail">
-                                                        <span>👨‍🏫</span>
-                                                        <span>{{ course.teacher.name }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🏢</span>
-                                                        <span>{{ course.room }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🕐</span>
-                                                        <span>{{ course.schedule_time }}</span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </a>
-                                        {% endfor %}
+                                <div class="timeslot-wrapper">
+                                    {% with slot_data=schedule.monday|get_item:slot %}
+                                    {% if slot_data.skip %}
+                                        <div class="timeslot-content">
+                                            <!-- Slot occupied by spanning course -->
+                                        </div>
                                     {% else %}
-                                        <div class="empty-slot">frei</div>
+                                        {% if slot_data.courses %}
+                                            {% for course in slot_data.courses %}
+                                            {% with span=slot_data.spans|get_span:course.id %}
+                                            <div class="timeslot-content has-course spanning" style="height: calc({{ span }} * 80px + {{ span|add:'-1' }} * (0.75rem + 80px));">
+                                                <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                                    <div class="course-item" style="height: 100%;">
+                                                        <div class="course-title">{{ course.title }}</div>
+                                                        <div class="course-details">
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.teacher.name }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.room }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.schedule_time }}</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                            {% endwith %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="timeslot-content">
+                                                <div class="empty-slot">frei</div>
+                                            </div>
+                                        {% endif %}
                                     {% endif %}
                                     {% endwith %}
                                 </div>
@@ -465,32 +500,44 @@
                                 <div class="time-label">
                                     {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
                                 </div>
-                                <div class="timeslot-content {% if schedule.tuesday|get_item:slot %}has-course{% endif %}">
-                                    {% with courses=schedule.tuesday|get_item:slot %}
-                                    {% if courses %}
-                                        {% for course in courses %}
-                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
-                                            <div class="course-item">
-                                                <div class="course-title">{{ course.title }}</div>
-                                                <div class="course-details">
-                                                    <span class="course-detail">
-                                                        <span>👨‍🏫</span>
-                                                        <span>{{ course.teacher.name }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🏢</span>
-                                                        <span>{{ course.room }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🕐</span>
-                                                        <span>{{ course.schedule_time }}</span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </a>
-                                        {% endfor %}
+                                <div class="timeslot-wrapper">
+                                    {% with slot_data=schedule.tuesday|get_item:slot %}
+                                    {% if slot_data.skip %}
+                                        <div class="timeslot-content">
+                                            <!-- Slot occupied by spanning course -->
+                                        </div>
                                     {% else %}
-                                        <div class="empty-slot">frei</div>
+                                        {% if slot_data.courses %}
+                                            {% for course in slot_data.courses %}
+                                            {% with span=slot_data.spans|get_span:course.id %}
+                                            <div class="timeslot-content has-course spanning" style="height: calc({{ span }} * 80px + {{ span|add:'-1' }} * (0.75rem + 80px));">
+                                                <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                                    <div class="course-item" style="height: 100%;">
+                                                        <div class="course-title">{{ course.title }}</div>
+                                                        <div class="course-details">
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.teacher.name }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.room }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.schedule_time }}</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                            {% endwith %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="timeslot-content">
+                                                <div class="empty-slot">frei</div>
+                                            </div>
+                                        {% endif %}
                                     {% endif %}
                                     {% endwith %}
                                 </div>
@@ -508,32 +555,44 @@
                                 <div class="time-label">
                                     {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
                                 </div>
-                                <div class="timeslot-content {% if schedule.wednesday|get_item:slot %}has-course{% endif %}">
-                                    {% with courses=schedule.wednesday|get_item:slot %}
-                                    {% if courses %}
-                                        {% for course in courses %}
-                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
-                                            <div class="course-item">
-                                                <div class="course-title">{{ course.title }}</div>
-                                                <div class="course-details">
-                                                    <span class="course-detail">
-                                                        <span>👨‍🏫</span>
-                                                        <span>{{ course.teacher.name }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🏢</span>
-                                                        <span>{{ course.room }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🕐</span>
-                                                        <span>{{ course.schedule_time }}</span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </a>
-                                        {% endfor %}
+                                <div class="timeslot-wrapper">
+                                    {% with slot_data=schedule.wednesday|get_item:slot %}
+                                    {% if slot_data.skip %}
+                                        <div class="timeslot-content">
+                                            <!-- Slot occupied by spanning course -->
+                                        </div>
                                     {% else %}
-                                        <div class="empty-slot">frei</div>
+                                        {% if slot_data.courses %}
+                                            {% for course in slot_data.courses %}
+                                            {% with span=slot_data.spans|get_span:course.id %}
+                                            <div class="timeslot-content has-course spanning" style="height: calc({{ span }} * 80px + {{ span|add:'-1' }} * (0.75rem + 80px));">
+                                                <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                                    <div class="course-item" style="height: 100%;">
+                                                        <div class="course-title">{{ course.title }}</div>
+                                                        <div class="course-details">
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.teacher.name }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.room }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.schedule_time }}</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                            {% endwith %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="timeslot-content">
+                                                <div class="empty-slot">frei</div>
+                                            </div>
+                                        {% endif %}
                                     {% endif %}
                                     {% endwith %}
                                 </div>
@@ -551,32 +610,44 @@
                                 <div class="time-label">
                                     {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
                                 </div>
-                                <div class="timeslot-content {% if schedule.thursday|get_item:slot %}has-course{% endif %}">
-                                    {% with courses=schedule.thursday|get_item:slot %}
-                                    {% if courses %}
-                                        {% for course in courses %}
-                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
-                                            <div class="course-item">
-                                                <div class="course-title">{{ course.title }}</div>
-                                                <div class="course-details">
-                                                    <span class="course-detail">
-                                                        <span>👨‍🏫</span>
-                                                        <span>{{ course.teacher.name }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🏢</span>
-                                                        <span>{{ course.room }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🕐</span>
-                                                        <span>{{ course.schedule_time }}</span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </a>
-                                        {% endfor %}
+                                <div class="timeslot-wrapper">
+                                    {% with slot_data=schedule.thursday|get_item:slot %}
+                                    {% if slot_data.skip %}
+                                        <div class="timeslot-content">
+                                            <!-- Slot occupied by spanning course -->
+                                        </div>
                                     {% else %}
-                                        <div class="empty-slot">frei</div>
+                                        {% if slot_data.courses %}
+                                            {% for course in slot_data.courses %}
+                                            {% with span=slot_data.spans|get_span:course.id %}
+                                            <div class="timeslot-content has-course spanning" style="height: calc({{ span }} * 80px + {{ span|add:'-1' }} * (0.75rem + 80px));">
+                                                <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                                    <div class="course-item" style="height: 100%;">
+                                                        <div class="course-title">{{ course.title }}</div>
+                                                        <div class="course-details">
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.teacher.name }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.room }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.schedule_time }}</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                            {% endwith %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="timeslot-content">
+                                                <div class="empty-slot">frei</div>
+                                            </div>
+                                        {% endif %}
                                     {% endif %}
                                     {% endwith %}
                                 </div>
@@ -594,32 +665,44 @@
                                 <div class="time-label">
                                     {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
                                 </div>
-                                <div class="timeslot-content {% if schedule.friday|get_item:slot %}has-course{% endif %}">
-                                    {% with courses=schedule.friday|get_item:slot %}
-                                    {% if courses %}
-                                        {% for course in courses %}
-                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
-                                            <div class="course-item">
-                                                <div class="course-title">{{ course.title }}</div>
-                                                <div class="course-details">
-                                                    <span class="course-detail">
-                                                        <span>👨‍🏫</span>
-                                                        <span>{{ course.teacher.name }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🏢</span>
-                                                        <span>{{ course.room }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🕐</span>
-                                                        <span>{{ course.schedule_time }}</span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </a>
-                                        {% endfor %}
+                                <div class="timeslot-wrapper">
+                                    {% with slot_data=schedule.friday|get_item:slot %}
+                                    {% if slot_data.skip %}
+                                        <div class="timeslot-content">
+                                            <!-- Slot occupied by spanning course -->
+                                        </div>
                                     {% else %}
-                                        <div class="empty-slot">frei</div>
+                                        {% if slot_data.courses %}
+                                            {% for course in slot_data.courses %}
+                                            {% with span=slot_data.spans|get_span:course.id %}
+                                            <div class="timeslot-content has-course spanning" style="height: calc({{ span }} * 80px + {{ span|add:'-1' }} * (0.75rem + 80px));">
+                                                <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                                    <div class="course-item" style="height: 100%;">
+                                                        <div class="course-title">{{ course.title }}</div>
+                                                        <div class="course-details">
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.teacher.name }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.room }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.schedule_time }}</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                            {% endwith %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="timeslot-content">
+                                                <div class="empty-slot">frei</div>
+                                            </div>
+                                        {% endif %}
                                     {% endif %}
                                     {% endwith %}
                                 </div>
@@ -637,32 +720,44 @@
                                 <div class="time-label">
                                     {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
                                 </div>
-                                <div class="timeslot-content {% if schedule.saturday|get_item:slot %}has-course{% endif %}">
-                                    {% with courses=schedule.saturday|get_item:slot %}
-                                    {% if courses %}
-                                        {% for course in courses %}
-                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
-                                            <div class="course-item">
-                                                <div class="course-title">{{ course.title }}</div>
-                                                <div class="course-details">
-                                                    <span class="course-detail">
-                                                        <span>👨‍🏫</span>
-                                                        <span>{{ course.teacher.name }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🏢</span>
-                                                        <span>{{ course.room }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🕐</span>
-                                                        <span>{{ course.schedule_time }}</span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </a>
-                                        {% endfor %}
+                                <div class="timeslot-wrapper">
+                                    {% with slot_data=schedule.saturday|get_item:slot %}
+                                    {% if slot_data.skip %}
+                                        <div class="timeslot-content">
+                                            <!-- Slot occupied by spanning course -->
+                                        </div>
                                     {% else %}
-                                        <div class="empty-slot">frei</div>
+                                        {% if slot_data.courses %}
+                                            {% for course in slot_data.courses %}
+                                            {% with span=slot_data.spans|get_span:course.id %}
+                                            <div class="timeslot-content has-course spanning" style="height: calc({{ span }} * 80px + {{ span|add:'-1' }} * (0.75rem + 80px));">
+                                                <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                                    <div class="course-item" style="height: 100%;">
+                                                        <div class="course-title">{{ course.title }}</div>
+                                                        <div class="course-details">
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.teacher.name }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.room }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.schedule_time }}</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                            {% endwith %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="timeslot-content">
+                                                <div class="empty-slot">frei</div>
+                                            </div>
+                                        {% endif %}
                                     {% endif %}
                                     {% endwith %}
                                 </div>
@@ -673,39 +768,51 @@
 
                     <!-- Sunday Schedule -->
                     <div class="day-schedule" id="schedule-sunday">
-                        <h2 class="schedule-title">Sonntag</h2>
+                        <h2 class="schedule-title">Sonntag</h2>le-title">Sonntag</h2>
                         <div class="timeslots">
                             {% for slot in time_slots %}
                             <div class="timeslot">
                                 <div class="time-label">
                                     {{ slot }} - {% if slot == "20:00" %}22:00{% else %}{% with hour=slot|slice:":2"|add:"0"|add:2 %}{% if hour < 10 %}0{{ hour }}{% else %}{{ hour }}{% endif %}:00{% endwith %}{% endif %}
                                 </div>
-                                <div class="timeslot-content {% if schedule.sunday|get_item:slot %}has-course{% endif %}">
-                                    {% with courses=schedule.sunday|get_item:slot %}
-                                    {% if courses %}
-                                        {% for course in courses %}
-                                        <a href="{% url 'course_detail' course.id %}" class="course-link">
-                                            <div class="course-item">
-                                                <div class="course-title">{{ course.title }}</div>
-                                                <div class="course-details">
-                                                    <span class="course-detail">
-                                                        <span>👨‍🏫</span>
-                                                        <span>{{ course.teacher.name }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🏢</span>
-                                                        <span>{{ course.room }}</span>
-                                                    </span>
-                                                    <span class="course-detail">
-                                                        <span>🕐</span>
-                                                        <span>{{ course.schedule_time }}</span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </a>
-                                        {% endfor %}
+                                <div class="timeslot-wrapper">
+                                    {% with slot_data=schedule.sunday|get_item:slot %}
+                                    {% if slot_data.skip %}
+                                        <div class="timeslot-content">
+                                            <!-- Slot occupied by spanning course -->
+                                        </div>
                                     {% else %}
-                                        <div class="empty-slot">frei</div>
+                                        {% if slot_data.courses %}
+                                            {% for course in slot_data.courses %}
+                                            {% with span=slot_data.spans|get_span:course.id %}
+                                            <div class="timeslot-content has-course spanning" style="height: calc({{ span }} * 80px + {{ span|add:'-1' }} * (0.75rem + 80px));">
+                                                <a href="{% url 'course_detail' course.id %}" class="course-link">
+                                                    <div class="course-item" style="height: 100%;">
+                                                        <div class="course-title">{{ course.title }}</div>
+                                                        <div class="course-details">
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.teacher.name }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.room }}</span>
+                                                            </span>
+                                                            <span class="course-detail">
+                                                                <span></span>
+                                                                <span>{{ course.schedule_time }}</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                            {% endwith %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="timeslot-content">
+                                                <div class="empty-slot">frei</div>
+                                            </div>
+                                        {% endif %}
                                     {% endif %}
                                     {% endwith %}
                                 </div>
@@ -716,9 +823,9 @@
 
                 {% else %}
                     <div class="no-courses">
-                        <h3>No Courses Enrolled</h3>
-                        <p>You haven't enrolled in any courses yet.</p>
-                        <a href="{% url 'course_list' %}" class="back-link" style="margin-top: 1rem;">Browse Courses</a>
+                        <h3>Keine Kurse</h3>
+                        <p>Du bist in keinen Kurs eingeschrieben.</p>
+                        <a href="{% url 'course_list' %}" class="back-link" style="margin-top: 1rem;">Vorlesungsverzeichnis</a>
                     </div>
                 {% endif %}
             </div>
@@ -730,14 +837,24 @@
         let currentWeekOffset = 0;
         let currentDayOfWeek = null; // Will store the currently selected day
 
-        function showDay(day) {
+        function showDay(day, event) {
             // Remove active class from all tabs
             document.querySelectorAll('.day-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
             
             // Add active class to clicked tab
-            event.currentTarget.classList.add('active');
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            } else {
+                // If no event, find the tab by day name
+                const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                const dayIndex = dayNames.indexOf(day);
+                const dayTabs = document.querySelectorAll('.day-tab');
+                if (dayIndex !== -1 && dayTabs[dayIndex]) {
+                    dayTabs[dayIndex].classList.add('active');
+                }
+            }
             
             // Hide all schedules
             document.querySelectorAll('.day-schedule').forEach(schedule => {
